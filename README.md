@@ -36,6 +36,10 @@ To build this app, you need:
 ./gradlew assembleDebug
 ```
 
+### Release and Deployment
+
+For information on signing APKs and deploying to Google Play Store, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Deep Link Format
 
 The app uses the following deep link formats:

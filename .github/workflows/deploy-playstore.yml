@@ -13,6 +13,23 @@ on:
           - alpha
           - beta
           - production
+      inAppUpdatePriority:
+        description: 'In-app update priority (0-5, where 5 is highest)'
+        required: false
+        default: '2'
+        type: choice
+        options:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+      userFraction:
+        description: 'User fraction for staged rollout (0.0-1.0, where 1.0 is 100%)'
+        required: false
+        default: '1.0'
+        type: string
 
 jobs:
   deploy-to-playstore:
@@ -62,7 +79,6 @@ jobs:
           releaseFiles: app/build/outputs/apk/release/app-release.apk
           track: ${{ inputs.track }}
           status: completed
-          inAppUpdatePriority: 2
-          userFraction: 1.0
+          inAppUpdatePriority: ${{ inputs.inAppUpdatePriority }}
+          userFraction: ${{ inputs.userFraction }}
           whatsNewDirectory: distribution/whatsnew
-          mappingFile: app/build/outputs/mapping/release/mapping.txt

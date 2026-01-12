@@ -131,17 +131,23 @@ To deploy to Google Play Store:
 2. Click on "Actions"
 3. Select "Deploy to Play Store" workflow
 4. Click "Run workflow"
-5. Select the release track:
-   - **internal**: Internal testing track
-   - **alpha**: Alpha testing track
-   - **beta**: Beta testing track
-   - **production**: Production release
+5. Configure the deployment options:
+   - **track**: Select the release track (internal/alpha/beta/production)
+   - **inAppUpdatePriority**: Set update priority (0-5, default: 2)
+   - **userFraction**: Set rollout percentage (0.0-1.0, default: 1.0 for 100%)
 6. Click "Run workflow"
 
 The workflow will:
 1. Build and sign the release APK
 2. Upload it to the specified track on Google Play Store
 3. Set the release to "completed" status
+
+#### Staged Rollouts
+
+For production releases, you can use staged rollouts by setting `userFraction` to less than 1.0:
+- `0.1` = 10% of users
+- `0.5` = 50% of users
+- `1.0` = 100% of users (full rollout)
 
 ### Release Notes (What's New)
 
