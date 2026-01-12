@@ -65,6 +65,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.net.URLEncoder
 import java.util.Locale
 
@@ -489,8 +491,14 @@ class MainActivity : ComponentActivity() {
         val dropoffCoords = geocodeAddress(dropoff)
         
         return if (pickupCoords != null && dropoffCoords != null) {
+            //Bolt supports only up to 6 decimal cases.
+            val pickupLat = BigDecimal(pickupCoords.first).setScale(6, RoundingMode.HALF_UP).toDouble()
+            val pickupLng = BigDecimal(pickupCoords.second).setScale(6, RoundingMode.HALF_UP).toDouble()
+            val dropoffLat = BigDecimal(dropoffCoords.second).setScale(6, RoundingMode.HALF_UP).toDouble()
+            val dropoffLng = BigDecimal(dropoffCoords.second).setScale(6, RoundingMode.HALF_UP).toDouble()
             // Use coordinate-based deep link format
-            "https://bolt.eu/ride?destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
+            //Log.d("MainActivity", "Opening -> bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}")
+            "bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}"
         } else {
             // Fallback to address-based format if geocoding fails
             //val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
