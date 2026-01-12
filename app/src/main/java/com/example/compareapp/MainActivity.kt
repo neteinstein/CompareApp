@@ -3,6 +3,7 @@ package com.example.compareapp
 import android.content.Intent
 import android.location.Geocoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +12,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.URLEncoder
 import java.util.Locale
@@ -40,17 +45,28 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            openInSplitScreen(pickup, dropoff)
+            // Disable button to prevent multiple clicks
+            compareButton.isEnabled = false
+            
+            // Launch coroutine for geocoding and opening apps
+            lifecycleScope.launch {
+                try {
+                    openInSplitScreen(pickup, dropoff)
+                } finally {
+                    // Re-enable button
+                    compareButton.isEnabled = true
+                }
+            }
         }
     }
 
-    private fun openInSplitScreen(pickup: String, dropoff: String) {
+    private suspend fun openInSplitScreen(pickup: String, dropoff: String) {
         // Open Uber deep link
         val uberDeepLink = createUberDeepLink(pickup, dropoff)
         val uberIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uberDeepLink))
         uberIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
 
-        // Open Bolt deep link
+        // Open Bolt deep link (with async geocoding)
         val boltDeepLink = createBoltDeepLink(pickup, dropoff)
         val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
         boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
@@ -81,8 +97,8 @@ class MainActivity : AppCompatActivity() {
         return "uber://?action=setPickup&pickup[formatted_address]=$pickupEncoded&dropoff[formatted_address]=$dropoffEncoded"
     }
 
-    private fun createBoltDeepLink(pickup: String, dropoff: String): String {
-        // Try to geocode the addresses to coordinates
+    private suspend fun createBoltDeepLink(pickup: String, dropoff: String): String {
+        // Try to geocode the addresses to coordinates (async)
         val pickupCoords = geocodeAddress(pickup)
         val dropoffCoords = geocodeAddress(dropoff)
         
@@ -98,19 +114,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun geocodeAddress(address: String): Pair<Double, Double>? {
-        return try {
-            val addresses = geocoder.getFromLocationName(address, 1)
-            if (addresses != null && addresses.isNotEmpty()) {
-                val location = addresses[0]
-                Pair(location.latitude, location.longitude)
-            } else {
-                Log.w("MainActivity", "No results found for address: $address")
+    private suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    // For Android 13+ (API 33+), use the newer async API
+                    // Note: This would require callback-based approach, but for simplicity
+                    // we'll use the sync method in IO dispatcher
+                    @Suppress("DEPRECATION")
+                    val addresses = geocoder.getFromLocationName(address, 1)
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val location = addresses[0]
+                        Pair(location.latitude, location.longitude)
+                    } else {
+                        Log.w("MainActivity", "No results found for address: $address")
+                        null
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    val addresses = geocoder.getFromLocationName(address, 1)
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val location = addresses[0]
+                        Pair(location.latitude, location.longitude)
+                    } else {
+                        Log.w("MainActivity", "No results found for address: $address")
+                        null
+                    }
+                }
+            } catch (e: IOException) {
+                Log.e("MainActivity", "Geocoding failed for address: $address", e)
                 null
             }
-        } catch (e: IOException) {
-            Log.e("MainActivity", "Geocoding failed for address: $address", e)
-            null
         }
     }
 }
