@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
 
         val areBothAppsInstalled = isUberInstalled && isBoltInstalled
         val warningMessage = remember(isUberInstalled, isBoltInstalled) {
-            if (areBothAppsInstalled) {
+            if (isUberInstalled && isBoltInstalled) {
                 null
             } else {
                 val missingApps = buildList {
@@ -149,17 +149,15 @@ class MainActivity : ComponentActivity() {
             )
 
             // Warning label when apps are not installed
-            if (!areBothAppsInstalled && warningMessage != null) {
+            warningMessage?.let { message ->
                 Text(
-                    text = warningMessage,
+                    text = message,
                     fontSize = 14.sp,
                     color = Color.Red,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-            } else {
-                Spacer(modifier = Modifier.padding(bottom = 16.dp))
-            }
+            } ?: Spacer(modifier = Modifier.padding(bottom = 16.dp))
 
             OutlinedTextField(
                 value = pickup,
