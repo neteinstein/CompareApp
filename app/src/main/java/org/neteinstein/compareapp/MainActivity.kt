@@ -175,6 +175,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun fetchAndSetLocation(
+        context: android.content.Context,
+        setGettingLocation: (Boolean) -> Unit,
+        onLocationReceived: (latitude: Double, longitude: Double, address: String) -> Unit
+    ) {
+        setGettingLocation(true)
+        lifecycleScope.launch {
+            try {
+                handleLocationRetrieval(
+                    onLocationReceived = onLocationReceived,
+                    onError = {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.location_error),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                )
+            } finally {
+                setGettingLocation(false)
+            }
+        }
+    }
+
     @Composable
     fun CompareScreen() {
         var pickup by remember { mutableStateOf("") }
@@ -197,27 +221,15 @@ class MainActivity : ComponentActivity() {
             
             if (granted) {
                 // Permission granted, get location
-                isGettingLocation = true
-                lifecycleScope.launch {
-                    try {
-                        handleLocationRetrieval(
-                            onLocationReceived = { lat, lng, address ->
-                                pickupCoordinates = Pair(lat, lng)
-                                pickup = address
-                                isUsingDeviceLocation = true
-                            },
-                            onError = {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.location_error),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
-                    } finally {
-                        isGettingLocation = false
+                fetchAndSetLocation(
+                    context = context,
+                    setGettingLocation = { isGettingLocation = it },
+                    onLocationReceived = { lat, lng, address ->
+                        pickupCoordinates = Pair(lat, lng)
+                        pickup = address
+                        isUsingDeviceLocation = true
                     }
-                }
+                )
             } else {
                 Toast.makeText(
                     context,
@@ -318,27 +330,15 @@ class MainActivity : ComponentActivity() {
                     onClick = {
                         if (hasLocationPermission()) {
                             // Permission already granted, get location directly
-                            isGettingLocation = true
-                            lifecycleScope.launch {
-                                try {
-                                    handleLocationRetrieval(
-                                        onLocationReceived = { lat, lng, address ->
-                                            pickupCoordinates = Pair(lat, lng)
-                                            pickup = address
-                                            isUsingDeviceLocation = true
-                                        },
-                                        onError = {
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.location_error),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    )
-                                } finally {
-                                    isGettingLocation = false
+                            fetchAndSetLocation(
+                                context = context,
+                                setGettingLocation = { isGettingLocation = it },
+                                onLocationReceived = { lat, lng, address ->
+                                    pickupCoordinates = Pair(lat, lng)
+                                    pickup = address
+                                    isUsingDeviceLocation = true
                                 }
-                            }
+                            )
                         } else {
                             // Request permission
                             locationPermissionLauncher.launch(
