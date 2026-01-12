@@ -1,7 +1,6 @@
 package org.neteinstein.compareapp
 
 import android.location.Address
-import android.location.Geocoder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -11,14 +10,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.MockitoAnnotations
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowGeocoder
-import java.io.IOException
 import java.net.URLDecoder
 
 @RunWith(RobolectricTestRunner::class)
