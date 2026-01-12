@@ -32,20 +32,26 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -117,13 +123,67 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    internal fun isAppInstalled(packageName: String): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+    internal fun checkRequiredApps(): Pair<Boolean, Boolean> {
+        val isUberInstalled = isAppInstalled("com.ubercab")
+        val isBoltInstalled = isAppInstalled("ee.mtakso.client")
+        return Pair(isUberInstalled, isBoltInstalled)
+    }
+
     @Composable
     fun CompareScreen() {
         var pickup by _pickupText
         var dropoff by remember { mutableStateOf("") }
         var isLoading by remember { mutableStateOf(false) }
         var isUsingLocation by _isUsingLocation
+        var isUberInstalled by remember { mutableStateOf(false) }
+        var isBoltInstalled by remember { mutableStateOf(false) }
         val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
+
+        // Check app installation status when screen is created and when it resumes
+        DisposableEffect(lifecycleOwner) {
+            // Initial check
+            val (uberInstalled, boltInstalled) = checkRequiredApps()
+            isUberInstalled = uberInstalled
+            isBoltInstalled = boltInstalled
+            
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    val (uberInstalled, boltInstalled) = checkRequiredApps()
+                    isUberInstalled = uberInstalled
+                    isBoltInstalled = boltInstalled
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(observer)
+            }
+        }
+
+        val areBothAppsInstalled = isUberInstalled && isBoltInstalled
+        val warningMessage = remember(isUberInstalled, isBoltInstalled) {
+            if (isUberInstalled && isBoltInstalled) {
+                null
+            } else {
+                val missingApps = buildList {
+                    if (!isUberInstalled) add("Uber")
+                    if (!isBoltInstalled) add("Bolt")
+                }
+                "Warning: ${missingApps.joinToString(" and ")} ${if (missingApps.size == 1) "app is" else "apps are"} required for this to work"
+            }
+        }
+        
+        val loadingText = stringResource(R.string.loading)
+        val compareText = stringResource(R.string.compare)
 
         Column(
             modifier = Modifier
@@ -134,14 +194,29 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Compare App",
+                text = stringResource(R.string.app_name),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Row(
+            // Warning label when apps are not installed
+            warningMessage?.let { message ->
+                Text(
+                    text = message,
+                    fontSize = 14.sp,
+                    color = Color.Red,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            } ?: Spacer(modifier = Modifier.padding(bottom = 16.dp))
+
+            OutlinedTextField(
+                value = pickup,
+                onValueChange = { pickup = it },
+                label = { Text(stringResource(R.string.pickup_location)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -179,7 +254,7 @@ class MainActivity : ComponentActivity() {
             OutlinedTextField(
                 value = dropoff,
                 onValueChange = { dropoff = it },
-                label = { Text("Dropoff") },
+                label = { Text(stringResource(R.string.dropoff_location)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
@@ -191,7 +266,7 @@ class MainActivity : ComponentActivity() {
                     if ((pickup.isEmpty() && !isUsingLocation) || dropoff.isEmpty()) {
                         Toast.makeText(
                             context,
-                            "Please enter both pickup and dropoff locations",
+                            context.getString(R.string.validation_message),
                             Toast.LENGTH_SHORT
                         ).show()
                         return@Button
@@ -211,7 +286,7 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !isLoading && areBothAppsInstalled
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -221,7 +296,7 @@ class MainActivity : ComponentActivity() {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(if (isLoading) "Loading..." else "Compare")
+                Text(if (isLoading) loadingText else compareText)
             }
         }
     }
@@ -256,13 +331,13 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 Log.e("MainActivity", "Could not open Bolt app: ${e.message}")
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Could not open Bolt app", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, getString(R.string.error_bolt), Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Could not open Uber app: ${e.message}")
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@MainActivity, "Could not open Uber app", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, getString(R.string.error_uber), Toast.LENGTH_SHORT).show()
             }
         }
     }

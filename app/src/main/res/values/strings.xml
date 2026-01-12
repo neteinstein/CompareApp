@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Compare App</string>
+    <string name="pickup_location">Pickup Location</string>
+    <string name="dropoff_location">Dropoff Location</string>
+    <string name="validation_message">Please enter both pickup and dropoff locations</string>
+    <string name="loading">Loading…</string>
+    <string name="compare">Compare</string>
+    <string name="error_bolt">Could not open Bolt app</string>
+    <string name="error_uber">Could not open Uber app</string>
+</resources>

@@ -3,6 +3,7 @@ package org.neteinstein.compareapp
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -93,5 +94,40 @@ class MainActivityTest {
         val expectedStart = "uber://?action=setPickup&pickup[formatted_address]="
         assertTrue(deepLink.startsWith(expectedStart))
         assertTrue(deepLink.contains("&dropoff[formatted_address]="))
+    }
+
+    @Test
+    fun testIsAppInstalled_returnsFalseForNonExistentPackage() {
+        // Given
+        val nonExistentPackage = "com.nonexistent.app"
+
+        // When
+        val result = activity.isAppInstalled(nonExistentPackage)
+
+        // Then
+        assertFalse(result)
+    }
+
+    @Test
+    fun testCheckRequiredApps_returnsCorrectStatus() {
+        // When
+        val (isUberInstalled, isBoltInstalled) = activity.checkRequiredApps()
+
+        // Then
+        // In Robolectric test environment, these apps won't be installed
+        assertFalse(isUberInstalled)
+        assertFalse(isBoltInstalled)
+    }
+
+    @Test
+    fun testIsAppInstalled_handlesValidPackageName() {
+        // Given - using Android system package that should exist in test environment
+        val systemPackage = "android"
+
+        // When
+        val result = activity.isAppInstalled(systemPackage)
+
+        // Then
+        assertTrue(result)
     }
 }
