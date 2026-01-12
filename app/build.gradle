@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace 'com.example.compareapp'
-    compileSdk 33
+    namespace 'org.neteinstein.compareapp'
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.example.compareapp"
+        applicationId "org.neteinstein.compareapp"
         minSdk 24
-        targetSdk 33
+        targetSdk 36
         versionCode 1
         versionName "1.0"
     }
@@ -33,7 +33,7 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.core:core-ktx:1.17.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.13.0'
 }
