@@ -26,7 +26,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build APK
+      - name: Build and Sign APK
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Get version info
@@ -44,10 +49,19 @@ jobs:
 
       - name: Rename APK
         run: |
-          SRC="app/build/outputs/apk/release/app-release-unsigned.apk"
+          # Check if signed APK exists, otherwise use unsigned
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            SRC="app/build/outputs/apk/release/app-release.apk"
+            SUFFIX="signed"
+          else
+            SRC="app/build/outputs/apk/release/app-release-unsigned.apk"
+            SUFFIX="unsigned"
+          fi
           VERSION="${{ steps.version.outputs.version_name }}"
-          DEST="app/build/outputs/apk/release/CompareApp-${VERSION}-unsigned.apk"
+          DEST="app/build/outputs/apk/release/CompareApp-${VERSION}-${SUFFIX}.apk"
           mv "${SRC}" "${DEST}"
+          echo "apk_suffix=${SUFFIX}" >> $GITHUB_OUTPUT
+        id: rename
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -70,6 +84,6 @@ jobs:
             - Uber app (for Uber comparison)
             - Bolt app (for Bolt comparison)
           files: |
-            app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_name }}-unsigned.apk
+            app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_name }}-${{ steps.rename.outputs.apk_suffix }}.apk
           draft: false
           prerelease: false

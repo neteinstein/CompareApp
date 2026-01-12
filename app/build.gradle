@@ -17,10 +17,36 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            // Signing configuration using environment variables or GitHub secrets
+            if (System.getenv("KEYSTORE_FILE")) {
+                def keystoreFile = System.getenv("KEYSTORE_FILE")
+                // If KEYSTORE_FILE contains base64 encoded data, decode it first
+                if (keystoreFile.length() > 500) {
+                    def keystoreBytes = keystoreFile.decodeBase64()
+                    def keystorePath = file("${buildDir}/release.keystore")
+                    keystorePath.parentFile.mkdirs()
+                    keystorePath.bytes = keystoreBytes
+                    storeFile keystorePath
+                } else {
+                    storeFile file(keystoreFile)
+                }
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Only apply signing config if keystore is available
+            if (System.getenv("KEYSTORE_FILE")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
