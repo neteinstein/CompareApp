@@ -75,6 +75,9 @@ class MainActivity : ComponentActivity() {
         var dropoff by remember { mutableStateOf("") }
         var isLoading by remember { mutableStateOf(false) }
         val context = LocalContext.current
+        
+        val loadingText = stringResource(R.string.loading)
+        val compareText = stringResource(R.string.compare)
 
         Column(
             modifier = Modifier
@@ -143,7 +146,7 @@ class MainActivity : ComponentActivity() {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(stringResource(if (isLoading) R.string.loading else R.string.compare))
+                Text(if (isLoading) loadingText else compareText)
             }
         }
     }
