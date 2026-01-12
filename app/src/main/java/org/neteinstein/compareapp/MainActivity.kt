@@ -490,13 +490,13 @@ class MainActivity : ComponentActivity() {
         
         return if (pickupCoords != null && dropoffCoords != null) {
             // Use coordinate-based deep link format
-            "bolt://ride?pickup_lat=${pickupCoords.first}&pickup_lng=${pickupCoords.second}&destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
+            "https://bolt.eu/ride?destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
         } else {
             // Fallback to address-based format if geocoding fails
-            val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
-            val dropoffEncoded = URLEncoder.encode(dropoff, "UTF-8")
+            //val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
+            //val dropoffEncoded = URLEncoder.encode(dropoff, "UTF-8")
             Log.w("MainActivity", "Geocoding failed, using fallback Bolt deep link format")
-            "bolt://ride?pickup=$pickupEncoded&destination=$dropoffEncoded"
+            "bolt://ride?pickup=0&destination=0"
         }
     }
     
