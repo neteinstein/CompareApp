@@ -283,134 +283,148 @@ class MainActivity : ComponentActivity() {
                 .fillMaxSize()
                 .statusBarsPadding()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            // Warning label when apps are not installed
-            warningMessage?.let { message ->
-                Text(
-                    text = message,
-                    fontSize = 14.sp,
-                    color = Color.Red,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            } ?: Spacer(modifier = Modifier.padding(bottom = 16.dp))
-
-            // Pickup location with location button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedTextField(
-                    value = pickup,
-                    onValueChange = { 
-                        pickup = it
-                        // If user starts typing, disable device location mode
-                        if (isUsingDeviceLocation) {
-                            isUsingDeviceLocation = false
-                            pickupCoordinates = null
-                        }
-                    },
-                    label = { Text(stringResource(R.string.pickup_location)) },
-                    modifier = Modifier.weight(1f),
-                    enabled = !isLoading && !isUsingDeviceLocation && !isGettingLocation
+                Text(
+                    text = stringResource(R.string.app_name),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-                
-                IconButton(
-                    onClick = {
-                        if (hasLocationPermission()) {
-                            // Permission already granted, get location directly
-                            fetchAndSetLocation(
-                                context = context,
-                                setGettingLocation = { isGettingLocation = it },
-                                onLocationReceived = { lat, lng, address ->
-                                    pickupCoordinates = Pair(lat, lng)
-                                    pickup = address
-                                    isUsingDeviceLocation = true
-                                }
+
+                // Warning label when apps are not installed
+                warningMessage?.let { message ->
+                    Text(
+                        text = message,
+                        fontSize = 14.sp,
+                        color = Color.Red,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                } ?: Spacer(modifier = Modifier.padding(bottom = 16.dp))
+
+                // Pickup location with location button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = pickup,
+                        onValueChange = { 
+                            pickup = it
+                            // If user starts typing, disable device location mode
+                            if (isUsingDeviceLocation) {
+                                isUsingDeviceLocation = false
+                                pickupCoordinates = null
+                            }
+                        },
+                        label = { Text(stringResource(R.string.pickup_location)) },
+                        modifier = Modifier.weight(1f),
+                        enabled = !isLoading && !isUsingDeviceLocation && !isGettingLocation
+                    )
+                    
+                    IconButton(
+                        onClick = {
+                            if (hasLocationPermission()) {
+                                // Permission already granted, get location directly
+                                fetchAndSetLocation(
+                                    context = context,
+                                    setGettingLocation = { isGettingLocation = it },
+                                    onLocationReceived = { lat, lng, address ->
+                                        pickupCoordinates = Pair(lat, lng)
+                                        pickup = address
+                                        isUsingDeviceLocation = true
+                                    }
+                                )
+                            } else {
+                                // Request permission
+                                locationPermissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                )
+                            }
+                        },
+                        enabled = !isLoading && !isGettingLocation
+                    ) {
+                        if (isGettingLocation) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
                             )
                         } else {
-                            // Request permission
-                            locationPermissionLauncher.launch(
-                                arrayOf(
-                                    Manifest.permission.ACCESS_FINE_LOCATION,
-                                    Manifest.permission.ACCESS_COARSE_LOCATION
-                                )
+                            Icon(
+                                imageVector = Icons.Filled.LocationOn,
+                                contentDescription = stringResource(R.string.use_current_location),
+                                tint = if (isUsingDeviceLocation) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = dropoff,
+                    onValueChange = { dropoff = it },
+                    label = { Text(stringResource(R.string.dropoff_location)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    enabled = !isLoading
+                )
+
+                Button(
+                    onClick = {
+                        if (pickup.isEmpty() || dropoff.isEmpty()) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.validation_message),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+
+                        isLoading = true
+                        lifecycleScope.launch {
+                            try {
+                                openInSplitScreen(pickup, dropoff, pickupCoordinates)
+                            } finally {
+                                isLoading = false
+                            }
+                        }
                     },
-                    enabled = !isLoading && !isGettingLocation
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading && areBothAppsInstalled
                 ) {
-                    if (isGettingLocation) {
+                    if (isLoading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = stringResource(R.string.use_current_location),
-                            tint = if (isUsingDeviceLocation) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
+                    Text(if (isLoading) loadingText else compareText)
                 }
             }
 
-            OutlinedTextField(
-                value = dropoff,
-                onValueChange = { dropoff = it },
-                label = { Text(stringResource(R.string.dropoff_location)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                enabled = !isLoading
+            // Information label at the bottom
+            Text(
+                text = stringResource(R.string.info_label),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 16.dp)
             )
-
-            Button(
-                onClick = {
-                    if (pickup.isEmpty() || dropoff.isEmpty()) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.validation_message),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@Button
-                    }
-
-                    isLoading = true
-                    lifecycleScope.launch {
-                        try {
-                            openInSplitScreen(pickup, dropoff, pickupCoordinates)
-                        } finally {
-                            isLoading = false
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading && areBothAppsInstalled
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(if (isLoading) loadingText else compareText)
-            }
         }
     }
 
