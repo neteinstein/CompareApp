@@ -61,6 +61,10 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        private const val SPLIT_SCREEN_DELAY_MS = 500L
+    }
+
     private lateinit var geocoder: Geocoder
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var pickupLocation: Pair<Double, Double>? = null
@@ -115,10 +119,10 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun CompareScreen() {
-        var pickup by remember { _pickupText }
+        var pickup by _pickupText
         var dropoff by remember { mutableStateOf("") }
         var isLoading by remember { mutableStateOf(false) }
-        var isUsingLocation by remember { _isUsingLocation }
+        var isUsingLocation by _isUsingLocation
         val context = LocalContext.current
 
         Column(
@@ -148,10 +152,8 @@ class MainActivity : ComponentActivity() {
                     value = pickup,
                     onValueChange = { 
                         pickup = it
-                        _pickupText.value = it
                         if (it.isNotEmpty()) {
                             isUsingLocation = false
-                            _isUsingLocation.value = false
                             pickupLocation = null
                         }
                     },
@@ -248,7 +250,7 @@ class MainActivity : ComponentActivity() {
             startActivity(uberIntent)
             
             // Small delay to ensure split screen is ready
-            kotlinx.coroutines.delay(500)
+            kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
             try {
                 startActivity(boltIntent)
             } catch (e: Exception) {
@@ -433,7 +435,7 @@ class MainActivity : ComponentActivity() {
             startActivity(uberIntent)
             
             // Small delay to ensure split screen is ready
-            kotlinx.coroutines.delay(500)
+            kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
             try {
                 startActivity(boltIntent)
             } catch (e: Exception) {
