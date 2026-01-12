@@ -94,15 +94,15 @@ class MainActivity : ComponentActivity() {
         var pickup by remember { mutableStateOf("") }
         var dropoff by remember { mutableStateOf("") }
         var isLoading by remember { mutableStateOf(false) }
-        var isUberInstalled by remember { mutableStateOf(true) }
-        var isBoltInstalled by remember { mutableStateOf(true) }
+        var isUberInstalled by remember { mutableStateOf(false) }
+        var isBoltInstalled by remember { mutableStateOf(false) }
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
 
-        // Check app installation status when screen resumes
+        // Check app installation status when screen is created and when it resumes
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
+                if (event == Lifecycle.Event.ON_CREATE || event == Lifecycle.Event.ON_RESUME) {
                     val (uberInstalled, boltInstalled) = checkRequiredApps()
                     isUberInstalled = uberInstalled
                     isBoltInstalled = boltInstalled
