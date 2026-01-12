@@ -19,5 +19,8 @@
             </intent-filter>
         </activity>
     </application>
-
+    <queries>
+        <package android:name="com.ubercab" />
+        <package android:name="ee.mtakso.client" />
+    </queries>
 </manifest>

@@ -35,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -80,6 +79,7 @@ class MainActivity : ComponentActivity() {
             packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
             true
         } catch (e: PackageManager.NameNotFoundException) {
+            Log.e("MainActivity", "App not found: $packageName")
             false
         }
     }
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
         var isUberInstalled by remember { mutableStateOf(false) }
         var isBoltInstalled by remember { mutableStateOf(false) }
         val context = LocalContext.current
-        val lifecycleOwner = LocalLifecycleOwner.current
+        val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
         // Check app installation status when screen is created and when it resumes
         DisposableEffect(lifecycleOwner) {
@@ -121,6 +121,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val areBothAppsInstalled = isUberInstalled && isBoltInstalled
+        Log.d("MainActivity", "Uber installed: $isUberInstalled, Bolt installed: $isBoltInstalled")
         val warningMessage = remember(isUberInstalled, isBoltInstalled) {
             if (isUberInstalled && isBoltInstalled) {
                 null
