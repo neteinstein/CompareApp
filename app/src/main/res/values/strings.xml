@@ -12,4 +12,5 @@
     <string name="location_permission_denied">Location permission denied</string>
     <string name="location_error">Could not get current location</string>
     <string name="getting_location">Getting location…</string>
+    <string name="info_label">This app is used to compare prices between Uber and Bolt. Choose the pickup and dropoff locations and both app will open in split screen already with the destination and cost set. Then it\'s just swiping to full screen the cheapest!</string>
 </resources>

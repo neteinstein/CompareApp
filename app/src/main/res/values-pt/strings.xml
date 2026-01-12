@@ -12,4 +12,5 @@
     <string name="location_permission_denied">Permissão de localização negada</string>
     <string name="location_error">Não foi possível obter a localização atual</string>
     <string name="getting_location">Obtendo localização…</string>
+    <string name="info_label">Este aplicativo é usado para comparar preços entre Uber e Bolt. Escolha os locais de recolha e entrega e ambos os aplicativos abrirão em tela dividida já com o destino e custo definidos. Então é só deslizar para tela cheia o mais barato!</string>
 </resources>
