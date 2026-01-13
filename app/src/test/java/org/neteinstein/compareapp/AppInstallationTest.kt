@@ -1,12 +1,17 @@
 package org.neteinstein.compareapp
 
+import android.content.Context
+import android.content.pm.PackageManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
+import org.neteinstein.compareapp.data.repository.AppRepositoryImpl
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -17,22 +22,30 @@ import org.robolectric.annotation.Config
 @Config(sdk = [28])
 class AppInstallationTest {
 
-    private lateinit var activity: MainActivity
+    @Mock
+    private lateinit var mockContext: Context
+
+    @Mock
+    private lateinit var mockPackageManager: PackageManager
+
+    private lateinit var appRepository: AppRepositoryImpl
 
     @Before
     fun setup() {
-        activity = Robolectric.buildActivity(MainActivity::class.java)
-            .create()
-            .get()
+        MockitoAnnotations.openMocks(this)
+        `when`(mockContext.packageManager).thenReturn(mockPackageManager)
+        appRepository = AppRepositoryImpl(mockContext)
     }
 
     @Test
     fun testIsAppInstalled_withSystemPackage() {
         // Given - android system package
         val systemPackage = "android"
+        `when`(mockPackageManager.getPackageInfo(systemPackage, PackageManager.GET_ACTIVITIES))
+            .thenReturn(android.content.pm.PackageInfo())
 
         // When
-        val result = activity.isAppInstalled(systemPackage)
+        val result = appRepository.isAppInstalled(systemPackage)
 
         // Then
         assertTrue("System package 'android' should be installed", result)
@@ -42,9 +55,11 @@ class AppInstallationTest {
     fun testIsAppInstalled_withNonExistentPackage() {
         // Given
         val fakePackage = "com.fake.nonexistent.app.that.doesnt.exist"
+        `when`(mockPackageManager.getPackageInfo(fakePackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result = activity.isAppInstalled(fakePackage)
+        val result = appRepository.isAppInstalled(fakePackage)
 
         // Then
         assertFalse("Fake package should not be installed", result)
@@ -54,9 +69,11 @@ class AppInstallationTest {
     fun testIsAppInstalled_withUberPackage() {
         // Given
         val uberPackage = "com.ubercab"
+        `when`(mockPackageManager.getPackageInfo(uberPackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result = activity.isAppInstalled(uberPackage)
+        val result = appRepository.isAppInstalled(uberPackage)
 
         // Then
         // In test environment, Uber won't be installed
@@ -67,9 +84,11 @@ class AppInstallationTest {
     fun testIsAppInstalled_withBoltPackage() {
         // Given
         val boltPackage = "ee.mtakso.client"
+        `when`(mockPackageManager.getPackageInfo(boltPackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result = activity.isAppInstalled(boltPackage)
+        val result = appRepository.isAppInstalled(boltPackage)
 
         // Then
         // In test environment, Bolt won't be installed
@@ -80,9 +99,11 @@ class AppInstallationTest {
     fun testIsAppInstalled_withEmptyPackageName() {
         // Given
         val emptyPackage = ""
+        `when`(mockPackageManager.getPackageInfo(emptyPackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result = activity.isAppInstalled(emptyPackage)
+        val result = appRepository.isAppInstalled(emptyPackage)
 
         // Then
         assertFalse("Empty package name should return false", result)
@@ -90,8 +111,14 @@ class AppInstallationTest {
 
     @Test
     fun testCheckRequiredApps_bothNotInstalled() {
+        // Given
+        `when`(mockPackageManager.getPackageInfo("com.ubercab", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+        `when`(mockPackageManager.getPackageInfo("ee.mtakso.client", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+
         // When
-        val (isUberInstalled, isBoltInstalled) = activity.checkRequiredApps()
+        val (isUberInstalled, isBoltInstalled) = appRepository.checkRequiredApps()
 
         // Then - In test environment
         assertFalse("Uber should not be installed in test environment", isUberInstalled)
@@ -100,8 +127,14 @@ class AppInstallationTest {
 
     @Test
     fun testCheckRequiredApps_returnsPair() {
+        // Given
+        `when`(mockPackageManager.getPackageInfo("com.ubercab", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+        `when`(mockPackageManager.getPackageInfo("ee.mtakso.client", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+
         // When
-        val result = activity.checkRequiredApps()
+        val result = appRepository.checkRequiredApps()
 
         // Then
         assertTrue("Result should be a Pair", result is Pair)
@@ -110,10 +143,16 @@ class AppInstallationTest {
 
     @Test
     fun testCheckRequiredApps_consistentResults() {
+        // Given
+        `when`(mockPackageManager.getPackageInfo("com.ubercab", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+        `when`(mockPackageManager.getPackageInfo("ee.mtakso.client", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+
         // When - Call multiple times
-        val result1 = activity.checkRequiredApps()
-        val result2 = activity.checkRequiredApps()
-        val result3 = activity.checkRequiredApps()
+        val result1 = appRepository.checkRequiredApps()
+        val result2 = appRepository.checkRequiredApps()
+        val result3 = appRepository.checkRequiredApps()
 
         // Then - Results should be consistent
         assertEquals("First call should match second", result1, result2)
@@ -121,21 +160,14 @@ class AppInstallationTest {
     }
 
     @Test
-    fun testHasLocationPermission_returnsFalseByDefault() {
-        // When
-        val result = activity.hasLocationPermission()
-
-        // Then - In test environment without granted permissions
-        assertFalse("Location permission should not be granted by default in tests", result)
-    }
-
-    @Test
     fun testIsAppInstalled_withSpecialCharactersInPackageName() {
         // Given - package name with dots (valid format)
         val validPackage = "com.test.app"
+        `when`(mockPackageManager.getPackageInfo(validPackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result = activity.isAppInstalled(validPackage)
+        val result = appRepository.isAppInstalled(validPackage)
 
         // Then
         assertFalse("Non-existent package should return false", result)
@@ -145,11 +177,13 @@ class AppInstallationTest {
     fun testIsAppInstalled_multipleCalls() {
         // Given
         val testPackage = "com.test.app"
+        `when`(mockPackageManager.getPackageInfo(testPackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When - Call multiple times
-        val result1 = activity.isAppInstalled(testPackage)
-        val result2 = activity.isAppInstalled(testPackage)
-        val result3 = activity.isAppInstalled(testPackage)
+        val result1 = appRepository.isAppInstalled(testPackage)
+        val result2 = appRepository.isAppInstalled(testPackage)
+        val result3 = appRepository.isAppInstalled(testPackage)
 
         // Then - All should be consistent
         assertEquals("First and second calls should match", result1, result2)
@@ -162,11 +196,18 @@ class AppInstallationTest {
         val package1 = "android"
         val package2 = "ANDROID"
         val package3 = "Android"
+        
+        `when`(mockPackageManager.getPackageInfo(package1, PackageManager.GET_ACTIVITIES))
+            .thenReturn(android.content.pm.PackageInfo())
+        `when`(mockPackageManager.getPackageInfo(package2, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+        `when`(mockPackageManager.getPackageInfo(package3, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result1 = activity.isAppInstalled(package1)
-        val result2 = activity.isAppInstalled(package2)
-        val result3 = activity.isAppInstalled(package3)
+        val result1 = appRepository.isAppInstalled(package1)
+        val result2 = appRepository.isAppInstalled(package2)
+        val result3 = appRepository.isAppInstalled(package3)
 
         // Then - Only exact match should work
         assertTrue("Lowercase 'android' should exist", result1)

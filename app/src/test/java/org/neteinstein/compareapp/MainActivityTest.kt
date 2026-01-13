@@ -1,12 +1,19 @@
 package org.neteinstein.compareapp
 
+import android.content.Context
+import android.content.pm.PackageManager
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
+import org.neteinstein.compareapp.data.repository.AppRepositoryImpl
+import org.neteinstein.compareapp.helpers.TestViewModelFactory
+import org.neteinstein.compareapp.ui.screens.MainViewModel
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URLDecoder
@@ -15,13 +22,19 @@ import java.net.URLDecoder
 @Config(sdk = [28])
 class MainActivityTest {
 
-    private lateinit var activity: MainActivity
+    @Mock
+    private lateinit var mockContext: Context
+
+    @Mock
+    private lateinit var mockPackageManager: PackageManager
+
+    private lateinit var appRepository: AppRepositoryImpl
 
     @Before
     fun setup() {
-        activity = Robolectric.buildActivity(MainActivity::class.java)
-            .create()
-            .get()
+        MockitoAnnotations.openMocks(this)
+        `when`(mockContext.packageManager).thenReturn(mockPackageManager)
+        appRepository = AppRepositoryImpl(mockContext)
     }
 
     @Test
@@ -32,8 +45,11 @@ class MainActivityTest {
         val pickupCoords = Pair(40.7128, -74.0060)
         val dropoffCoords = Pair(40.7589, -73.9851)
 
+        // Create a minimal ViewModel just for testing the method
+        val viewModel = createTestViewModel()
+
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("uber://?action=setPickup"))
@@ -54,8 +70,10 @@ class MainActivityTest {
         val pickupCoords = null
         val dropoffCoords = null
 
+        val viewModel = createTestViewModel()
+
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("uber://?action=setPickup"))
@@ -73,8 +91,10 @@ class MainActivityTest {
         val pickupCoords = null
         val dropoffCoords = null
 
+        val viewModel = createTestViewModel()
+
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("uber://?action=setPickup"))
@@ -90,8 +110,10 @@ class MainActivityTest {
         val pickupCoords = null
         val dropoffCoords = null
 
+        val viewModel = createTestViewModel()
+
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         // Verify the exact format expected by Uber
@@ -104,9 +126,11 @@ class MainActivityTest {
     fun testIsAppInstalled_returnsFalseForNonExistentPackage() {
         // Given
         val nonExistentPackage = "com.nonexistent.app"
+        `when`(mockPackageManager.getPackageInfo(nonExistentPackage, PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
 
         // When
-        val result = activity.isAppInstalled(nonExistentPackage)
+        val result = appRepository.isAppInstalled(nonExistentPackage)
 
         // Then
         assertFalse(result)
@@ -114,8 +138,14 @@ class MainActivityTest {
 
     @Test
     fun testCheckRequiredApps_returnsCorrectStatus() {
+        // Given
+        `when`(mockPackageManager.getPackageInfo("com.ubercab", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+        `when`(mockPackageManager.getPackageInfo("ee.mtakso.client", PackageManager.GET_ACTIVITIES))
+            .thenThrow(PackageManager.NameNotFoundException())
+
         // When
-        val (isUberInstalled, isBoltInstalled) = activity.checkRequiredApps()
+        val (isUberInstalled, isBoltInstalled) = appRepository.checkRequiredApps()
 
         // Then
         // In Robolectric test environment, these apps won't be installed
@@ -127,11 +157,17 @@ class MainActivityTest {
     fun testIsAppInstalled_handlesValidPackageName() {
         // Given - using Android system package that should exist in test environment
         val systemPackage = "android"
+        `when`(mockPackageManager.getPackageInfo(systemPackage, PackageManager.GET_ACTIVITIES))
+            .thenReturn(android.content.pm.PackageInfo())
 
         // When
-        val result = activity.isAppInstalled(systemPackage)
+        val result = appRepository.isAppInstalled(systemPackage)
 
         // Then
         assertTrue(result)
+    }
+
+    private fun createTestViewModel(): MainViewModel {
+        return TestViewModelFactory.createTestViewModel(appRepository = appRepository)
     }
 }

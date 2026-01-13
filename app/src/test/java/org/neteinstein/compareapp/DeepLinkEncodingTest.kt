@@ -2,10 +2,9 @@ package org.neteinstein.compareapp
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.neteinstein.compareapp.helpers.TestViewModelFactory
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URLDecoder
@@ -17,14 +16,7 @@ import java.net.URLDecoder
 @Config(sdk = [28])
 class DeepLinkEncodingTest {
 
-    private lateinit var activity: MainActivity
-
-    @Before
-    fun setup() {
-        activity = Robolectric.buildActivity(MainActivity::class.java)
-            .create()
-            .get()
-    }
+    private val viewModel = TestViewModelFactory.createTestViewModel()
 
     @Test
     fun testUberDeepLink_encodesSpaces() {
@@ -33,7 +25,7 @@ class DeepLinkEncodingTest {
         val dropoff = "Central Park"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then
         // Spaces should be encoded
@@ -48,7 +40,7 @@ class DeepLinkEncodingTest {
         val dropoff = "Location & Place"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then
         // Ampersand should be encoded as %26
@@ -62,7 +54,7 @@ class DeepLinkEncodingTest {
         val dropoff = "456 Park Ave, NY, NY"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Commas should be encoded
         assertTrue("Link should contain encoded commas", deepLink.contains("%2C"))
@@ -75,7 +67,7 @@ class DeepLinkEncodingTest {
         val dropoff = "Zürich, Switzerland"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
         val decoded = URLDecoder.decode(deepLink, "UTF-8")
 
         // Then - Decoded link should contain original text
@@ -90,7 +82,7 @@ class DeepLinkEncodingTest {
         val dropoff = "Building #456"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Hash should be encoded
         assertTrue("Hash symbol should be encoded", deepLink.contains("%23"))
@@ -103,7 +95,7 @@ class DeepLinkEncodingTest {
         val dropoff = "Where to go?"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Question mark should be encoded
         assertTrue("Question mark should be encoded", deepLink.contains("%3F"))
@@ -116,7 +108,7 @@ class DeepLinkEncodingTest {
         val dropoff = "y=456"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Equals should be encoded in addresses
         assertTrue("Equals should be encoded", deepLink.contains("%3D"))
@@ -129,7 +121,7 @@ class DeepLinkEncodingTest {
         val dropoff = "End"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Protocol and parameter structure should be intact
         assertTrue("Should have uber protocol", deepLink.startsWith("uber://"))
@@ -145,7 +137,7 @@ class DeepLinkEncodingTest {
         val dropoff = "東京 Tokyo"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
         val decoded = URLDecoder.decode(deepLink, "UTF-8")
 
         // Then
@@ -161,7 +153,7 @@ class DeepLinkEncodingTest {
         val dropoff = "N/A"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then
         assertTrue("Slashes should be encoded", deepLink.contains("%2F"))
@@ -174,7 +166,7 @@ class DeepLinkEncodingTest {
         val dropoff = "Building (A)"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Brackets and parentheses should be encoded
         assertTrue("Brackets should be encoded", 
@@ -188,7 +180,7 @@ class DeepLinkEncodingTest {
         val dropoff = "50% Avenue"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Percent should be encoded
         assertTrue("Percent should be encoded", deepLink.contains("%25"))
@@ -201,7 +193,7 @@ class DeepLinkEncodingTest {
         val dropoff = "C+D Avenue"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Plus should be encoded
         assertTrue("Plus should be encoded", deepLink.contains("%2B"))
@@ -214,8 +206,8 @@ class DeepLinkEncodingTest {
         val dropoff = "Test Location"
 
         // When - Create link twice
-        val deepLink1 = activity.createUberDeepLink(pickup, dropoff, null, null)
-        val deepLink2 = activity.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink1 = viewModel.createUberDeepLink(pickup, dropoff, null, null)
+        val deepLink2 = viewModel.createUberDeepLink(pickup, dropoff, null, null)
 
         // Then - Should be identical (consistent encoding)
         assertTrue("Links should be identical", deepLink1 == deepLink2)
