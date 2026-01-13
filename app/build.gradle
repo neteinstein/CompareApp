@@ -2,6 +2,8 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'org.jetbrains.kotlin.plugin.compose'
+    id 'dagger.hilt.android.plugin'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -114,4 +116,9 @@ dependencies {
     androidTestImplementation 'com.github.takahirom.roborazzi:roborazzi:1.38.0'
     androidTestImplementation 'com.github.takahirom.roborazzi:roborazzi-compose:1.38.0'
     androidTestImplementation 'com.github.takahirom.roborazzi:roborazzi-rule:1.38.0'
+
+    // Hilt for dependency injection
+    implementation 'com.google.dagger:hilt-android:2.51.1'
+    kapt 'com.google.dagger:hilt-android-compiler:2.51.1'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
 }
