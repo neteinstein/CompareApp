@@ -106,6 +106,7 @@ class LocationTest {
         val pickup = "Current Location"
         val dropoff = "Central Park, New York"
         val pickupCoords = Pair(40.758896, -73.985130)
+        val dropoffCoords = Pair(40.785091, -73.968285)
         
         // Setup mock geocoder for dropoff
         val dropoffAddress = Address(java.util.Locale.US).apply {
@@ -132,6 +133,7 @@ class LocationTest {
         val pickup = "Current Location"
         val dropoff = "Invalid Dropoff"
         val pickupCoords = Pair(40.758896, -73.985130)
+        val dropoffCoords = null
         
         // Setup geocoder to fail for dropoff
         ShadowGeocoder.setFromLocationName(dropoff, emptyList())
@@ -151,6 +153,7 @@ class LocationTest {
         // Given
         val pickup = "Times Square, New York"
         val dropoff = "Central Park, New York"
+        val dropoffCoords = Pair(40.785091, -73.968285)
         
         val pickupAddress = Address(java.util.Locale.US).apply {
             latitude = 40.758896

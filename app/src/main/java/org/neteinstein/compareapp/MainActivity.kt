@@ -504,7 +504,7 @@ class MainActivity : ComponentActivity() {
             //Bolt supports only up to 6 decimal cases.
             val pickupLat = pickupCoords.first
             val pickupLng = pickupCoords.second
-            val dropoffLat = dropoffCoords.second
+            val dropoffLat = dropoffCoords.first
             val dropoffLng = dropoffCoords.second
             // Use coordinate-based deep link format
             //Log.d("MainActivity", "Opening -> bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}")

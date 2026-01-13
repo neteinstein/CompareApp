@@ -32,3 +32,8 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Test artifacts
+screenshots/
+*.png
+roborazzi/

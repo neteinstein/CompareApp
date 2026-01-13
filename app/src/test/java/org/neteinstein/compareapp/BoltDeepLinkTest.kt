@@ -32,6 +32,7 @@ class BoltDeepLinkTest {
         // Given
         val pickup = "Times Square, New York"
         val dropoff = "Central Park, New York"
+        val dropoffCoords = Pair(40.785091, -73.968285)
         
         // Setup mock geocoder
         val pickupAddress = Address(java.util.Locale.US).apply {
@@ -62,6 +63,7 @@ class BoltDeepLinkTest {
         // Given
         val pickup = "Invalid Address 12345"
         val dropoff = "Another Invalid Address 67890"
+        val dropoffCoords = null
         
         // Setup geocoder to return empty list (geocoding fails)
         ShadowGeocoder.setFromLocationName(pickup, emptyList())
@@ -87,6 +89,7 @@ class BoltDeepLinkTest {
         // Given
         val pickup = "Valid Address"
         val dropoff = "Invalid Address"
+        val dropoffCoords = null
         
         // Only pickup succeeds
         val pickupAddress = Address(java.util.Locale.US).apply {
@@ -115,6 +118,7 @@ class BoltDeepLinkTest {
         val expectedLng1 = -98.765432
         val expectedLat2 = 23.456789
         val expectedLng2 = -87.654321
+        val dropoffCoords = Pair(expectedLat2, expectedLng2)
         
         val pickupAddress = Address(java.util.Locale.US).apply {
             latitude = expectedLat1
