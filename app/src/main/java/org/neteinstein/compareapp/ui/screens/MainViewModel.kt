@@ -88,7 +88,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun prepareDeepLinks(
-        onSuccess: (uberDeepLink: String, boltDeepLink: String) -> Unit
+        onSuccess: (uberDeepLink: String, boltDeepLink: String) -> Unit,
+        onError: () -> Unit = {}
     ) {
         val currentState = _uiState.value
         if (currentState.pickup.isEmpty() || currentState.dropoff.isEmpty()) {
@@ -118,6 +119,7 @@ class MainViewModel @Inject constructor(
                 onSuccess(uberDeepLink, boltDeepLink)
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error preparing deep links", e)
+                onError()
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }

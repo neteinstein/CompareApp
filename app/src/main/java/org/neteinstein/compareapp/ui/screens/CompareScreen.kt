@@ -214,9 +214,18 @@ fun CompareScreen(
                         return@Button
                     }
 
-                    viewModel.prepareDeepLinks { uberDeepLink, boltDeepLink ->
-                        onOpenDeepLinks(uberDeepLink, boltDeepLink)
-                    }
+                    viewModel.prepareDeepLinks(
+                        onSuccess = { uberDeepLink, boltDeepLink ->
+                            onOpenDeepLinks(uberDeepLink, boltDeepLink)
+                        },
+                        onError = {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_prepare_deeplinks),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading && areBothAppsInstalled
