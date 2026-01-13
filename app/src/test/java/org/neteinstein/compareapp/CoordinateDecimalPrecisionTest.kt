@@ -13,6 +13,9 @@ import org.neteinstein.compareapp.helpers.TestViewModelFactory
 import org.neteinstein.compareapp.ui.screens.MainViewModel
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.roundToLong
 
 /**
  * Test suite to validate that all coordinates have at most 6 decimal places.
@@ -38,10 +41,10 @@ class CoordinateDecimalPrecisionTest {
      * by comparing with a rounded version
      */
     private fun hasAtMostDecimalPlaces(value: Double, maxPlaces: Int): Boolean {
-        val multiplier = Math.pow(10.0, maxPlaces.toDouble())
-        val rounded = Math.round(value * multiplier) / multiplier
+        val multiplier = 10.0.pow(maxPlaces)
+        val rounded = (value * multiplier).roundToLong() / multiplier
         // Allow small floating point tolerance
-        return Math.abs(value - rounded) < 1e-10
+        return abs(value - rounded) < 1e-10
     }
 
     /**
@@ -194,7 +197,7 @@ class CoordinateDecimalPrecisionTest {
         assertEquals(40.123457, pickupLat, 0.0000001)
         assertEquals(-73.987655, pickupLng, 0.0000001)
         assertEquals(41.111112, destLat, 0.0000001)
-        assertEquals(-75.000000, destLng, 0.0000001)
+        assertEquals(-75.0, destLng, 0.0000001)
     }
 
     @Test
