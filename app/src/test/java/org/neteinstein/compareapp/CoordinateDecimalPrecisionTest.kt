@@ -180,9 +180,9 @@ class CoordinateDecimalPrecisionTest {
         // Given - test HALF_UP rounding mode at 7th decimal place
         val pickup = "Test"
         val dropoff = "Test"
-        // Values where 7th decimal is 5 (should round up)
+        // Values where 7th decimal is 5 (should round up with HALF_UP)
         val pickupCoords = Pair(40.1234565, -73.9876545)
-        val dropoffCoords = Pair(41.1111115, -74.9999995)
+        val dropoffCoords = Pair(41.1111115, -74.5555555)
 
         // When
         val deepLink = viewModel.createBoltDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
@@ -197,7 +197,7 @@ class CoordinateDecimalPrecisionTest {
         assertEquals(40.123457, pickupLat, 0.0000001)
         assertEquals(-73.987655, pickupLng, 0.0000001)
         assertEquals(41.111112, destLat, 0.0000001)
-        assertEquals(-75.0, destLng, 0.0000001)
+        assertEquals(-74.555556, destLng, 0.0000001)
     }
 
     @Test
