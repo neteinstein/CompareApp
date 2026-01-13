@@ -29,6 +29,8 @@ class MainActivityTest {
         // Given
         val pickup = "123 Main St, New York, NY"
         val dropoff = "456 Park Ave, New York, NY"
+        val pickupCoords = Pair(40.7128, -74.0060)
+        val dropoffCoords = Pair(40.7589, -73.9851)
 
         // When
         val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
@@ -49,6 +51,8 @@ class MainActivityTest {
         // Given
         val pickup = "Times Square & 42nd St"
         val dropoff = "Central Park, New York"
+        val pickupCoords = null
+        val dropoffCoords = null
 
         // When
         val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
@@ -66,6 +70,8 @@ class MainActivityTest {
         // Given
         val pickup = ""
         val dropoff = ""
+        val pickupCoords = null
+        val dropoffCoords = null
 
         // When
         val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
@@ -81,6 +87,8 @@ class MainActivityTest {
         // Given
         val pickup = "Pickup Location"
         val dropoff = "Dropoff Location"
+        val pickupCoords = null
+        val dropoffCoords = null
 
         // When
         val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
