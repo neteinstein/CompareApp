@@ -115,7 +115,7 @@ class LocationTest {
         ShadowGeocoder.setFromLocationName(dropoff, listOf(dropoffAddress))
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff, pickupCoords)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         // Should use provided coordinates for pickup
@@ -137,7 +137,7 @@ class LocationTest {
         ShadowGeocoder.setFromLocationName(dropoff, emptyList())
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff, pickupCoords)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         // Should fallback to address-based format
@@ -165,7 +165,7 @@ class LocationTest {
         ShadowGeocoder.setFromLocationName(dropoff, listOf(dropoffAddress))
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff, null)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, dropoffCoords = dropoffCoords)
 
         // Then
         // Should geocode both pickup and dropoff

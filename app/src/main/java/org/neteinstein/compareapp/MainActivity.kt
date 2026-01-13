@@ -79,10 +79,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         geocoder = Geocoder(this, Locale.getDefault())
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        
+
         // Enable edge-to-edge display to handle window insets properly
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        
+
         setContent {
             CompareAppTheme {
                 Surface(
@@ -222,7 +222,7 @@ class MainActivity : ComponentActivity() {
         ) { permissions ->
             val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                          permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-            
+
             if (granted) {
                 // Permission granted, get location
                 fetchAndSetLocation(
@@ -249,7 +249,7 @@ class MainActivity : ComponentActivity() {
             val (uberInstalled, boltInstalled) = checkRequiredApps()
             isUberInstalled = uberInstalled
             isBoltInstalled = boltInstalled
-            
+
             val observer = LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) {
                     val (uberInstalled, boltInstalled) = checkRequiredApps()
@@ -276,7 +276,7 @@ class MainActivity : ComponentActivity() {
                 "Warning: ${missingApps.joinToString(" and ")} ${if (missingApps.size == 1) "app is" else "apps are"} required for this to work"
             }
         }
-        
+
         val loadingText = stringResource(R.string.loading)
         val compareText = stringResource(R.string.compare)
 
@@ -321,7 +321,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     OutlinedTextField(
                         value = pickup,
-                        onValueChange = { 
+                        onValueChange = {
                             pickup = it
                             // If user starts typing, disable device location mode
                             if (isUsingDeviceLocation) {
@@ -333,7 +333,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(1f),
                         enabled = !isLoading && !isUsingDeviceLocation && !isGettingLocation
                     )
-                    
+
                     IconButton(
                         onClick = {
                             if (hasLocationPermission()) {
@@ -438,7 +438,7 @@ class MainActivity : ComponentActivity() {
         } else {
             lightColorScheme()
         }
-        
+
         MaterialTheme(
             colorScheme = colorScheme,
             content = content
@@ -446,20 +446,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private suspend fun openInSplitScreen(pickup: String, dropoff: String, pickupCoordinates: Pair<Double, Double>? = null) {
+        // If pickup coordinates are provided (from device location), use them directly
+        val pickupCoords = pickupCoordinates ?: geocodeAddress(pickup)
+        val dropoffCoords = geocodeAddress(dropoff)
+
         // Open Uber deep link (always uses address string)
-        val uberDeepLink = createUberDeepLink(pickup, dropoff)
+        val uberDeepLink = createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
         val uberIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uberDeepLink))
         uberIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
 
         // Open Bolt deep link (uses coordinates if available, otherwise geocodes the address)
-        val boltDeepLink = createBoltDeepLink(pickup, dropoff, pickupCoordinates)
+        val boltDeepLink = createBoltDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
         val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
         boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
 
         try {
             // Start Uber first
             startActivity(uberIntent)
-            
+
             // Small delay to ensure split screen is ready
             kotlinx.coroutines.delay(500)
             try {
@@ -478,24 +482,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    internal fun createUberDeepLink(pickup: String, dropoff: String): String {
+    internal fun createUberDeepLink(
+        pickup: String,
+        dropoff: String,
+        pickupCoords: Pair<Double, Double>?,
+        dropoffCoords: Pair<Double, Double>?
+    ): String {
         val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
         val dropoffEncoded = URLEncoder.encode(dropoff, "UTF-8")
         // Uber deep link format
         return "uber://?action=setPickup&pickup[formatted_address]=$pickupEncoded&dropoff[formatted_address]=$dropoffEncoded"
     }
 
-    internal suspend fun createBoltDeepLink(pickup: String, dropoff: String, pickupCoordinates: Pair<Double, Double>? = null): String {
-        // If pickup coordinates are provided (from device location), use them directly
-        val pickupCoords = pickupCoordinates ?: geocodeAddress(pickup)
-        val dropoffCoords = geocodeAddress(dropoff)
-        
+    internal suspend fun createBoltDeepLink(
+        pickup: String,
+        dropoff: String,
+        pickupCoords: Pair<Double, Double>? = null,
+        dropoffCoords: Pair<Double, Double>?
+    ): String {
         return if (pickupCoords != null && dropoffCoords != null) {
             //Bolt supports only up to 6 decimal cases.
-            val pickupLat = BigDecimal(pickupCoords.first).setScale(6, RoundingMode.HALF_UP).toDouble()
-            val pickupLng = BigDecimal(pickupCoords.second).setScale(6, RoundingMode.HALF_UP).toDouble()
-            val dropoffLat = BigDecimal(dropoffCoords.second).setScale(6, RoundingMode.HALF_UP).toDouble()
-            val dropoffLng = BigDecimal(dropoffCoords.second).setScale(6, RoundingMode.HALF_UP).toDouble()
+            val pickupLat = pickupCoords.first
+            val pickupLng = pickupCoords.second
+            val dropoffLat = dropoffCoords.second
+            val dropoffLng = dropoffCoords.second
             // Use coordinate-based deep link format
             //Log.d("MainActivity", "Opening -> bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}")
             "bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}"
@@ -507,7 +517,7 @@ class MainActivity : ComponentActivity() {
             "bolt://ride?pickup=0&destination=0"
         }
     }
-    
+
     internal suspend fun geocodeAddress(address: String): Pair<Double, Double>? {
         return withContext(Dispatchers.IO) {
             try {
@@ -517,7 +527,7 @@ class MainActivity : ComponentActivity() {
                 val addresses = geocoder.getFromLocationName(address, 1)
                 if (addresses != null && addresses.isNotEmpty()) {
                     val location = addresses[0]
-                    Pair(location.latitude, location.longitude)
+                    Pair(roundDecimal(location.latitude), roundDecimal(location.longitude))
                 } else {
                     Log.w("MainActivity", "No results found for address: $address")
                     null
@@ -528,4 +538,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    internal fun roundDecimal(value: Double, scale: Int = 6) =
+        BigDecimal(value).setScale(scale, RoundingMode.HALF_UP).toDouble()
 }

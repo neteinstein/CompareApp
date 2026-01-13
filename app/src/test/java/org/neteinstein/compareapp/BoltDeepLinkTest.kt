@@ -3,9 +3,6 @@ package org.neteinstein.compareapp
 import android.location.Address
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -50,7 +47,7 @@ class BoltDeepLinkTest {
         ShadowGeocoder.setFromLocationName(dropoff, listOf(dropoffAddress))
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, dropoffCoords = dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("bolt://ride?"))
@@ -71,7 +68,7 @@ class BoltDeepLinkTest {
         ShadowGeocoder.setFromLocationName(dropoff, emptyList())
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, dropoffCoords = dropoffCoords)
 
         // Then
         // Should fallback to address-based format
@@ -100,7 +97,7 @@ class BoltDeepLinkTest {
         ShadowGeocoder.setFromLocationName(dropoff, emptyList())
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, dropoffCoords = dropoffCoords)
 
         // Then
         // Should fallback to address-based format if any geocoding fails
@@ -132,7 +129,7 @@ class BoltDeepLinkTest {
         ShadowGeocoder.setFromLocationName(dropoff, listOf(dropoffAddress))
 
         // When
-        val deepLink = activity.createBoltDeepLink(pickup, dropoff)
+        val deepLink = activity.createBoltDeepLink(pickup, dropoff, dropoffCoords = dropoffCoords)
 
         // Then
         assertTrue(deepLink.contains("pickup_lat=$expectedLat1"))

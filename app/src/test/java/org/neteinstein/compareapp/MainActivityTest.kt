@@ -1,11 +1,7 @@
 package org.neteinstein.compareapp
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -35,7 +31,7 @@ class MainActivityTest {
         val dropoff = "456 Park Ave, New York, NY"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff)
+        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("uber://?action=setPickup"))
@@ -55,7 +51,7 @@ class MainActivityTest {
         val dropoff = "Central Park, New York"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff)
+        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("uber://?action=setPickup"))
@@ -72,7 +68,7 @@ class MainActivityTest {
         val dropoff = ""
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff)
+        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         assertTrue(deepLink.startsWith("uber://?action=setPickup"))
@@ -87,7 +83,7 @@ class MainActivityTest {
         val dropoff = "Dropoff Location"
 
         // When
-        val deepLink = activity.createUberDeepLink(pickup, dropoff)
+        val deepLink = activity.createUberDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then
         // Verify the exact format expected by Uber
