@@ -13,7 +13,6 @@ import org.neteinstein.compareapp.helpers.TestViewModelFactory
 import org.neteinstein.compareapp.ui.screens.MainViewModel
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import kotlin.math.pow
 
 /**
  * Test suite to validate that all coordinates have at most 6 decimal places.
@@ -35,16 +34,14 @@ class CoordinateDecimalPrecisionTest {
     }
 
     /**
-     * Helper function to count decimal places in a Double value
+     * Helper function to verify a coordinate has at most the specified decimal places
+     * by comparing with a rounded version
      */
-    private fun countDecimalPlaces(value: Double): Int {
-        val stringValue = value.toString()
-        val decimalIndex = stringValue.indexOf('.')
-        if (decimalIndex == -1) return 0
-        
-        // Remove trailing zeros and count remaining decimal places
-        val decimalPart = stringValue.substring(decimalIndex + 1).trimEnd('0')
-        return decimalPart.length
+    private fun hasAtMostDecimalPlaces(value: Double, maxPlaces: Int): Boolean {
+        val multiplier = Math.pow(10.0, maxPlaces.toDouble())
+        val rounded = Math.round(value * multiplier) / multiplier
+        // Allow small floating point tolerance
+        return Math.abs(value - rounded) < 1e-10
     }
 
     /**
@@ -74,10 +71,10 @@ class CoordinateDecimalPrecisionTest {
         val destLng = extractCoordinateFromDeepLink(deepLink, "destination_lng")
 
         // Verify all coordinates have at most 6 decimal places
-        assertTrue("Pickup latitude has more than 6 decimal places", countDecimalPlaces(pickupLat) <= 6)
-        assertTrue("Pickup longitude has more than 6 decimal places", countDecimalPlaces(pickupLng) <= 6)
-        assertTrue("Destination latitude has more than 6 decimal places", countDecimalPlaces(destLat) <= 6)
-        assertTrue("Destination longitude has more than 6 decimal places", countDecimalPlaces(destLng) <= 6)
+        assertTrue("Pickup latitude has more than 6 decimal places", hasAtMostDecimalPlaces(pickupLat, 6))
+        assertTrue("Pickup longitude has more than 6 decimal places", hasAtMostDecimalPlaces(pickupLng, 6))
+        assertTrue("Destination latitude has more than 6 decimal places", hasAtMostDecimalPlaces(destLat, 6))
+        assertTrue("Destination longitude has more than 6 decimal places", hasAtMostDecimalPlaces(destLng, 6))
     }
 
     @Test
@@ -122,10 +119,10 @@ class CoordinateDecimalPrecisionTest {
         val destLng = extractCoordinateFromDeepLink(deepLink, "destination_lng")
 
         // All should have at most 6 decimal places
-        assertTrue(countDecimalPlaces(pickupLat) <= 6)
-        assertTrue(countDecimalPlaces(pickupLng) <= 6)
-        assertTrue(countDecimalPlaces(destLat) <= 6)
-        assertTrue(countDecimalPlaces(destLng) <= 6)
+        assertTrue(hasAtMostDecimalPlaces(pickupLat, 6))
+        assertTrue(hasAtMostDecimalPlaces(pickupLng, 6))
+        assertTrue(hasAtMostDecimalPlaces(destLat, 6))
+        assertTrue(hasAtMostDecimalPlaces(destLng, 6))
     }
 
     @Test
@@ -197,7 +194,7 @@ class CoordinateDecimalPrecisionTest {
         assertEquals(40.123457, pickupLat, 0.0000001)
         assertEquals(-73.987655, pickupLng, 0.0000001)
         assertEquals(41.111112, destLat, 0.0000001)
-        assertEquals(-75.0, destLng, 0.0000001)
+        assertEquals(-75.000000, destLng, 0.0000001)
     }
 
     @Test
