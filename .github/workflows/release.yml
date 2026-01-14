@@ -28,6 +28,7 @@ jobs:
 
       - name: Build and Sign APK
         env:
+          BUILD_NUMBER: ${{ github.run_number }}
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -39,12 +40,13 @@ jobs:
         run: |
           VERSION_NAME=$(grep "versionName" app/build.gradle | \
             awk '{print $2}' | tr -d '"')
-          VERSION_CODE=$(grep "versionCode" app/build.gradle | \
-            awk '{print $2}')
-          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          BUILD_NUMBER=${{ github.run_number }}
           echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
-          echo "version_code=${VERSION_CODE}" >> $GITHUB_OUTPUT
-          TAG="v${VERSION_NAME}-build${VERSION_CODE}-${TIMESTAMP}"
+          echo "build_number=${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          # Create version string in MAJOR.MINOR.PATCH.BUILD format
+          VERSION_WITH_BUILD="${VERSION_NAME}.${BUILD_NUMBER}"
+          echo "version_with_build=${VERSION_WITH_BUILD}" >> $GITHUB_OUTPUT
+          TAG="v${VERSION_WITH_BUILD}"
           echo "release_tag=${TAG}" >> $GITHUB_OUTPUT
 
       - name: Rename APK
@@ -57,7 +59,7 @@ jobs:
             SRC="app/build/outputs/apk/release/app-release-unsigned.apk"
             SUFFIX="unsigned"
           fi
-          VERSION="${{ steps.version.outputs.version_name }}"
+          VERSION="${{ steps.version.outputs.version_with_build }}"
           DEST="app/build/outputs/apk/release/CompareApp-${VERSION}-${SUFFIX}.apk"
           mv "${SRC}" "${DEST}"
           echo "apk_suffix=${SUFFIX}" >> $GITHUB_OUTPUT
@@ -68,12 +70,12 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.release_tag }}
           name: >
-            Release ${{ steps.version.outputs.version_name }}
-            (Build ${{ steps.version.outputs.version_code }})
+            Release ${{ steps.version.outputs.version_with_build }}
           body: |
-            ## CompareApp Release ${{ steps.version.outputs.version_name }}
+            ## CompareApp Release ${{ steps.version.outputs.version_with_build }}
 
-            Build number: ${{ steps.version.outputs.version_code }}
+            Version: ${{ steps.version.outputs.version_name }}
+            Build number: ${{ steps.version.outputs.build_number }}
             Built from commit: ${{ github.sha }}
 
             ### Installation
@@ -84,6 +86,6 @@ jobs:
             - Uber app (for Uber comparison)
             - Bolt app (for Bolt comparison)
           files: |
-            app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_name }}-${{ steps.rename.outputs.apk_suffix }}.apk
+            app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_with_build }}-${{ steps.rename.outputs.apk_suffix }}.apk
           draft: false
           prerelease: false
