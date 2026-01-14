@@ -34,6 +34,51 @@ Tests for input validation and edge cases:
 - Coordinate range validation (latitude/longitude)
 - Deep link format validation
 
+### 5. CoordinateDecimalPrecisionTest.kt
+Tests to ensure all coordinates have at most 6 decimal places:
+- Validates coordinates in Bolt deep links are rounded to 6 decimal places
+- Tests correct rounding behavior (HALF_UP mode)
+- Tests extreme coordinates (near poles, equator, zero)
+- Tests negative coordinates (Southern/Western hemispheres)
+- Ensures coordinates with less than 6 decimals are preserved
+- Verifies consistency across multiple calls
+- Tests zero coordinates (Null Island)
+
+### 6. RoundDecimalTest.kt
+Tests for the MathUtils.roundDecimal() function:
+- Default scale (6 decimal places)
+- Custom scale values
+- Negative numbers
+- Zero values
+- HALF_UP rounding mode behavior
+
+### 7. LocationTest.kt
+Tests for location-related functionality:
+- Reverse geocoding with valid/invalid coordinates
+- Multiple geocoding results handling
+- Location permission checks
+
+### 8. DeepLinkIntegrationTest.kt
+Integration tests for deep link creation:
+- Uber deep links with null coordinates
+- Bolt deep links with coordinate rounding
+- Mixed scenarios with partial coordinates
+
+### 9. AppInstallationTest.kt
+Tests for app installation detection:
+- Checks if Uber/Bolt apps are installed
+- Handles package manager exceptions
+
+### 10. ThemeTest.kt
+Tests for app theming and UI:
+- Theme color validation
+- Material3 design system compliance
+
+### 11. DeepLinkEncodingTest.kt
+Tests for deep link URL encoding:
+- Special character encoding
+- Parameter formatting
+
 ## Running the Tests
 
 ### Using Android Studio
@@ -80,6 +125,7 @@ The tests cover the following areas:
 3. **Input Validation** - URL encoding and parameter validation
 4. **Edge Cases** - Empty strings, special characters, invalid inputs
 5. **Async Operations** - Coroutine-based geocoding tests
+6. **Coordinate Precision** - Ensures all coordinates have at most 6 decimal places
 
 ## Code Changes for Testability
 

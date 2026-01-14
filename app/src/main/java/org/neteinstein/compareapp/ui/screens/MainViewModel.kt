@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
+import org.neteinstein.compareapp.utils.MathUtils
 import java.net.URLEncoder
 import javax.inject.Inject
 
@@ -144,10 +145,10 @@ class MainViewModel @Inject constructor(
         dropoffCoords: Pair<Double, Double>?
     ): String {
         return if (pickupCoords != null && dropoffCoords != null) {
-            val pickupLat = pickupCoords.first
-            val pickupLng = pickupCoords.second
-            val dropoffLat = dropoffCoords.first
-            val dropoffLng = dropoffCoords.second
+            val pickupLat = MathUtils.roundDecimal(pickupCoords.first)
+            val pickupLng = MathUtils.roundDecimal(pickupCoords.second)
+            val dropoffLat = MathUtils.roundDecimal(dropoffCoords.first)
+            val dropoffLng = MathUtils.roundDecimal(dropoffCoords.second)
             "bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}"
         } else {
             Log.w("MainViewModel", "Geocoding failed, using fallback Bolt deep link format")
