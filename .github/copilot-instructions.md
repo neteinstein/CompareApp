@@ -39,7 +39,7 @@ CompareApp is an Android application that allows users to compare ride-sharing s
 - Use meaningful variable and function names
 
 ### Architecture Patterns
-- Follow MVVM architecture as documented in `ARCHITECTURE_REFACTORING.md`
+- Follow MVVM architecture as documented in `docs/ARCHITECTURE.md`
 - Business logic belongs in ViewModels, not Activities
 - Data operations go in Repository implementations
 - UI code should be in Composable functions in `ui/screens/`
@@ -118,10 +118,11 @@ app/src/main/java/org/neteinstein/compareapp/
 ## Resources
 
 ### Key Documentation
-- **Setup Guide:** `BUILD_INSTRUCTIONS.md` - How to build and run the app
-- **Architecture:** `ARCHITECTURE_REFACTORING.md` - MVVM architecture details
-- **Deployment:** `DEPLOYMENT.md` - APK signing and Play Store deployment
-- **Project Overview:** `README.md` - Features and usage instructions
+- **Project Overview:** `README.md` - Features, usage instructions, and quick start guide
+- **Architecture:** `docs/ARCHITECTURE.md` - Detailed MVVM architecture and design patterns
+- **CI/CD Pipeline:** `docs/CICD.md` - Continuous integration and deployment workflows
+- **Deployment:** `docs/DEPLOYMENT.md` - APK signing and Play Store deployment guide
+- **Future Roadmap:** `docs/BRAINSTORM.md` - Ideas for future enhancements
 
 ### Example Files
 - **ViewModel Example:** `app/src/main/java/org/neteinstein/compareapp/ui/screens/MainViewModel.kt`
