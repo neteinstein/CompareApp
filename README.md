@@ -127,14 +127,15 @@ CompareApp follows the MVVM (Model-View-ViewModel) architecture pattern with Hil
 
 The APK will be at: `app/build/outputs/apk/release/app-release-unsigned.apk`
 
-For signed releases and Play Store deployment, see [DEPLOYMENT.md](DEPLOYMENT.md)
+For signed releases and Play Store deployment, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ## Documentation
 
 - **[CHANGELOG](CHANGELOG.md)** - Release history and version changes
-- **[Deployment Guide](DEPLOYMENT.md)** - APK signing and Play Store deployment
-- **[Build Instructions](BUILD_INSTRUCTIONS.md)** - Detailed build and setup guide
-- **[Architecture Refactoring](ARCHITECTURE_REFACTORING.md)** - MVVM architecture details
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed low-level architecture
+- **[CI/CD Pipeline](docs/CICD.md)** - Continuous integration and deployment
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Play Store deployment process
+- **[Future Roadmap](docs/BRAINSTORM.md)** - Ideas for future enhancements
 
 ## Technical Stack
 

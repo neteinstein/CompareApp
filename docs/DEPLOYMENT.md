@@ -806,9 +806,31 @@ Check: **"Quality" → "Reviews"**
 - Address common complaints
 - Thank positive reviewers
 
-### Update Release Notes
+### Release Notes
 
-In `distribution/whatsnew/en-US.txt`:
+#### GitHub Releases - Automated
+
+GitHub releases are **automatically generated** with dynamic release notes based on merged pull requests and commits. When you push to the `main` branch:
+
+1. The release workflow automatically creates a GitHub release
+2. Release notes are generated from commits since the last release
+3. Changes are categorized by labels (features, bug fixes, documentation, etc.)
+
+To customize how changes are categorized, edit `.github/release.yml`.
+
+#### Play Store Release Notes (What's New) - Manual
+
+**Important:** Play Store release notes are **NOT automated** and must be manually updated before each deployment.
+
+Before deploying to Play Store:
+
+1. Review the [CHANGELOG.md](../CHANGELOG.md) file in the repository root
+2. Check recent [GitHub Releases](https://github.com/neteinstein/CompareUberVsBoltPriceApp/releases) for changes
+3. Update `distribution/whatsnew/en-US.txt` with user-facing changes
+4. Ensure the content is under 500 characters (Play Store limit)
+5. Optionally add translations in other language files (e.g., `es-ES.txt`, `fr-FR.txt`)
+
+Example `distribution/whatsnew/en-US.txt`:
 
 ```
 Version 1.1
@@ -819,6 +841,15 @@ Version 1.1
 ```
 
 **Character limit**: 500 per language
+
+#### Maintaining the CHANGELOG
+
+Keep the [CHANGELOG.md](../CHANGELOG.md) file updated with notable changes:
+
+1. Add entries to the `[Unreleased]` section as you make changes
+2. When releasing a new version, move unreleased changes to a new version section
+3. Follow the [Keep a Changelog](https://keepachangelog.com/) format
+4. Use categories: Added, Changed, Deprecated, Removed, Fixed, Security
 
 ### App Store Optimization (ASO)
 
