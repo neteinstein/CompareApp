@@ -89,3 +89,5 @@ jobs:
             app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_with_build }}-${{ steps.rename.outputs.apk_suffix }}.apk
           draft: false
           prerelease: false
+          generate_release_notes: true
+          append_body: true

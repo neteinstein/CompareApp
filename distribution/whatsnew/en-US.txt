@@ -1,1 +1,7 @@
-Initial release of CompareApp - compare Uber and Bolt ride-sharing services side-by-side with ease!
+✨ Latest updates and improvements
+
+🚀 What's New:
+- Review CHANGELOG.md and GitHub releases for details
+- Update this file before each Play Store deployment
+
+📝 Remember to update this file with actual release changes!

@@ -149,17 +149,40 @@ For production releases, you can use staged rollouts by setting `userFraction` t
 - `0.5` = 50% of users
 - `1.0` = 100% of users (full rollout)
 
-### Release Notes (What's New)
+### Release Notes
 
-To include release notes in your Play Store deployment:
+#### GitHub Releases
 
-1. Create a directory: `distribution/whatsnew/`
-2. Add language-specific text files with release notes:
-   - `distribution/whatsnew/en-US.txt`
-   - `distribution/whatsnew/es-ES.txt`
-   - etc.
+GitHub releases are now **automatically generated** with dynamic release notes based on merged pull requests and commits. When you push to the `main` branch:
 
-Each file should contain a brief description of what's new (max 500 characters).
+1. The release workflow automatically creates a GitHub release
+2. Release notes are generated from commits since the last release
+3. Changes are categorized by labels (features, bug fixes, documentation, etc.)
+
+To customize how changes are categorized, edit `.github/release.yml`.
+
+#### Play Store Release Notes (What's New)
+
+**Important:** Play Store release notes are **NOT automated** and must be manually updated before each deployment.
+
+Before deploying to Play Store:
+
+1. Review the [CHANGELOG.md](CHANGELOG.md) file
+2. Check recent [GitHub Releases](https://github.com/neteinstein/CompareUberVsBoltPriceApp/releases) for changes
+3. Update `distribution/whatsnew/en-US.txt` with user-facing changes
+4. Ensure the content is under 500 characters (Play Store limit)
+5. Optionally add translations in other language files (e.g., `es-ES.txt`, `fr-FR.txt`)
+
+The release notes should focus on user-facing changes and be concise and clear.
+
+#### Maintaining the CHANGELOG
+
+Keep the [CHANGELOG.md](CHANGELOG.md) file updated with notable changes:
+
+1. Add entries to the `[Unreleased]` section as you make changes
+2. When releasing a new version, move unreleased changes to a new version section
+3. Follow the [Keep a Changelog](https://keepachangelog.com/) format
+4. Use categories: Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## Troubleshooting
 
