@@ -14,8 +14,10 @@ android {
         applicationId "org.neteinstein.compareapp"
         minSdk 24
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        // Use BUILD_NUMBER from environment (GitHub Actions run number) or default to 1
+        def buildNumber = System.getenv("BUILD_NUMBER")
+        versionCode buildNumber ? buildNumber.toInteger() : 1
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

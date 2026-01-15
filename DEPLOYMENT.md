@@ -177,14 +177,39 @@ Each file should contain a brief description of what's new (max 500 characters).
 - Ensure the version code is higher than the current version in Play Store
 - For first-time uploads, you may need to manually upload the first APK through Play Console
 
-### Version Code Issues
+### Version Management
 
-If you get a version code error, increment the `versionCode` in `app/build.gradle`:
+The app uses an automatic versioning system:
 
-```gradle
-versionCode 2  // Increment this number
-versionName "1.1"  // Optionally update version name
+- **versionName**: Follows semantic versioning (MAJOR.MINOR.PATCH) and is set in `app/build.gradle`
+- **versionCode**: Automatically incremented using GitHub Actions run number
+- **Release tags**: Use the format `vMAJOR.MINOR.PATCH.BUILD` (e.g., `v1.0.0.42`)
+
+#### Updating the Version
+
+To release a new version:
+
+1. **For patch releases** (bug fixes): No change needed - the build number auto-increments
+2. **For minor releases** (new features): Update `versionName` in `app/build.gradle`:
+   ```gradle
+   versionName "1.1.0"  // Increment MINOR version, reset PATCH to 0
+   ```
+3. **For major releases** (breaking changes): Update `versionName` in `app/build.gradle`:
+   ```gradle
+   versionName "2.0.0"  // Increment MAJOR version, reset MINOR and PATCH to 0
+   ```
+
+The `versionCode` is automatically set from the `BUILD_NUMBER` environment variable, which GitHub Actions populates with `github.run_number`. For local builds, it defaults to 1.
+
+#### Version Code Issues
+
+The version code automatically increments with each GitHub Actions run. If you need to manually set a version code for testing:
+
+```bash
+BUILD_NUMBER=123 ./gradlew assembleRelease
 ```
+
+For Play Store uploads, ensure your GitHub Actions run number is higher than the current version code in the Play Store.
 
 ## Security Best Practices
 

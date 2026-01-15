@@ -54,6 +54,7 @@ jobs:
 
       - name: Build and Sign Release APK
         env:
+          BUILD_NUMBER: ${{ github.run_number }}
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
