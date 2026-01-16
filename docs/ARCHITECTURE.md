@@ -384,6 +384,8 @@ bolt://ride
   &destination_lng=<LNG>
 ```
 
+**Note**: Coordinates must be formatted with exactly 6 decimal places (e.g., `40.758896`) using period as decimal separator. The implementation uses `String.format(Locale.US, "%.6f", coordinate)` to ensure consistent formatting across all locales.
+
 **Fallback (Text-based)**:
 ```
 bolt://ride

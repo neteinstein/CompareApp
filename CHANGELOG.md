@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed Bolt deep link not working when coordinates have more than 6 decimal places
+  - Changed coordinate formatting to use `String.format(Locale.US, "%.6f", ...)` 
+  - Ensures exactly 6 decimal places in all coordinates
+  - Uses locale-independent formatting (period as decimal separator)
+  - Matches documented Bolt deep link format from API documentation
+
 ### Changed
 - Release notes are now automatically generated from commit history
 

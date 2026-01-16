@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
-import org.neteinstein.compareapp.utils.MathUtils
 import java.net.URLEncoder
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -145,10 +145,12 @@ class MainViewModel @Inject constructor(
         dropoffCoords: Pair<Double, Double>?
     ): String {
         return if (pickupCoords != null && dropoffCoords != null) {
-            val pickupLat = MathUtils.roundDecimal(pickupCoords.first)
-            val pickupLng = MathUtils.roundDecimal(pickupCoords.second)
-            val dropoffLat = MathUtils.roundDecimal(dropoffCoords.first)
-            val dropoffLng = MathUtils.roundDecimal(dropoffCoords.second)
+            // Format coordinates with exactly 6 decimal places to ensure compatibility with Bolt API
+            // Using Locale.US to ensure consistent decimal separator (period, not comma)
+            val pickupLat = String.format(Locale.US, "%.6f", pickupCoords.first)
+            val pickupLng = String.format(Locale.US, "%.6f", pickupCoords.second)
+            val dropoffLat = String.format(Locale.US, "%.6f", dropoffCoords.first)
+            val dropoffLng = String.format(Locale.US, "%.6f", dropoffCoords.second)
             "bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}"
         } else {
             Log.w("MainViewModel", "Geocoding failed, using fallback Bolt deep link format")
