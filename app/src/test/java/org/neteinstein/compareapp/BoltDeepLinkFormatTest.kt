@@ -2,6 +2,7 @@ package org.neteinstein.compareapp
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -91,8 +92,8 @@ class BoltDeepLinkFormatTest {
         val deepLink = viewModel.createBoltDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then - should always use period (.) not comma (,)
-        assertTrue("Deep link should not contain comma as decimal separator",
-            !deepLink.contains(","))
+        assertFalse("Deep link should not contain comma as decimal separator",
+            deepLink.contains(","))
         assertTrue("Deep link should use period as decimal separator",
             deepLink.contains("."))
     }
