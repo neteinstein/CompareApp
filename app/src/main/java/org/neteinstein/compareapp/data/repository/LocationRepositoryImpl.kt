@@ -1,6 +1,7 @@
 package org.neteinstein.compareapp.data.repository
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -38,13 +39,14 @@ class LocationRepositoryImpl @Inject constructor(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(): Location? {
         if (!hasLocationPermission()) {
             Log.w("LocationRepository", "Location permission not granted")
             return null
         }
 
-        return withContext(Dispatchers.IO) @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]) {
+        return withContext(Dispatchers.IO) {
             try {
                 val cancellationTokenSource = CancellationTokenSource()
                 fusedLocationClient.getCurrentLocation(
