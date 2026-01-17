@@ -152,7 +152,7 @@ class MainViewModel @Inject constructor(
         pickupCoords: Pair<Double, Double>?,
         dropoffCoords: Pair<Double, Double>?
     ): String {
-        Log.d("MainViewModel, ", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
+        Log.d("MainViewModel", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
         return if (pickupCoords != null && dropoffCoords != null) {
             "bolt://ride?pickup_lat=${pickupCoords.first}&pickup_lng=${pickupCoords.second}&destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
         } else {
@@ -171,7 +171,7 @@ class MainViewModel @Inject constructor(
         pickupCoords: Pair<Double, Double>?,
         dropoffCoords: Pair<Double, Double>?
     ): String {
-        Log.d("MainViewModel, ", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
+        Log.d("MainViewModel", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
         return if (pickupCoords != null && dropoffCoords != null) {
             "https://bolt.eu/ride/?pickup_lat=${pickupCoords.first}&pickup_lng=${pickupCoords.second}&destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
         } else {
