@@ -41,8 +41,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     CompareScreen(
-                        onOpenDeepLinks = { uberDeepLink, boltDeepLink ->
-                            openInSplitScreen(uberDeepLink, boltDeepLink)
+                        onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
+                            openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
                         }
                     )
                 }
@@ -50,22 +50,33 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openInSplitScreen(uberDeepLink: String, boltDeepLink: String) {
+    private fun openInSplitScreen(uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) {
         lifecycleScope.launch {
             try {
                 // Open Uber deep link
+
                 val uberIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uberDeepLink))
                 uberIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
                 startActivity(uberIntent)
 
                 // Small delay to ensure split screen is ready
                 kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
+
                 
                 try {
                     // Open Bolt deep link
                     val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
                     boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                    boltIntent.setPackage("ee.mtakso.client")
                     startActivity(boltIntent)
+
+                    kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
+
+                    val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
+                    boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                    boltIntent.setPackage("ee.mtakso.client")
+                    startActivity(boltIntent)
+
                 } catch (e: Exception) {
                     Log.e("MainActivity", "Could not open Bolt app: ${e.message}")
                     withContext(Dispatchers.Main) {

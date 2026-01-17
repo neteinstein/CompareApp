@@ -45,7 +45,7 @@ import org.neteinstein.compareapp.R
 @Composable
 fun CompareScreen(
     viewModel: MainViewModel = hiltViewModel(),
-    onOpenDeepLinks: (uberDeepLink: String, boltDeepLink: String) -> Unit
+    onOpenDeepLinks: (uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -213,8 +213,8 @@ fun CompareScreen(
                     }
 
                     viewModel.prepareDeepLinks(
-                        onSuccess = { uberDeepLink, boltDeepLink ->
-                            onOpenDeepLinks(uberDeepLink, boltDeepLink)
+                        onSuccess = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
+                            onOpenDeepLinks(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
                         },
                         onError = {
                             Toast.makeText(
