@@ -154,7 +154,11 @@ class MainViewModel @Inject constructor(
     ): String {
         Log.d("MainViewModel, ", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
         return if (pickupCoords != null && dropoffCoords != null) {
-            "bolt://ride?pickup_lat=${pickupCoords.first}&pickup_lng=${pickupCoords.second}&destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
+            val pickupLat = String.format(Locale.US, "%.6f", pickupCoords.first)
+            val pickupLng = String.format(Locale.US, "%.6f", pickupCoords.second)
+            val destLat = String.format(Locale.US, "%.6f", dropoffCoords.first)
+            val destLng = String.format(Locale.US, "%.6f", dropoffCoords.second)
+            "bolt://ride?pickup_lat=$pickupLat&pickup_lng=$pickupLng&destination_lat=$destLat&destination_lng=$destLng"
         } else {
             Log.w("MainViewModel", "Geocoding failed, using fallback Bolt deep link format")
             val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
@@ -173,7 +177,11 @@ class MainViewModel @Inject constructor(
     ): String {
         Log.d("MainViewModel, ", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
         return if (pickupCoords != null && dropoffCoords != null) {
-            "https://bolt.eu/ride/?pickup_lat=${pickupCoords.first}&pickup_lng=${pickupCoords.second}&destination_lat=${dropoffCoords.first}&destination_lng=${dropoffCoords.second}"
+            val pickupLat = String.format(Locale.US, "%.6f", pickupCoords.first)
+            val pickupLng = String.format(Locale.US, "%.6f", pickupCoords.second)
+            val destLat = String.format(Locale.US, "%.6f", dropoffCoords.first)
+            val destLng = String.format(Locale.US, "%.6f", dropoffCoords.second)
+            "https://bolt.eu/ride/?pickup_lat=$pickupLat&pickup_lng=$pickupLng&destination_lat=$destLat&destination_lng=$destLng"
         } else {
             Log.w("MainViewModel", "Geocoding failed, using fallback Bolt deep link format")
             val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
