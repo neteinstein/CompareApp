@@ -153,7 +153,11 @@ class MainViewModel @Inject constructor(
         return String.format(Locale.US, "%.6f", value)
     }
 
-    // This deeplink opens the app, but won't work to set destination...
+    /**
+     * Creates a bolt:// scheme deep link that opens the Bolt app.
+     * This link includes pickup and destination coordinates, but the destination
+     * setting requires the subsequent HTTPS link from createBoltDeepLinkWeb().
+     */
     internal fun createBoltDeepLink(
         pickup: String,
         dropoff: String,
@@ -177,8 +181,11 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // This deep link should only be triggered when the app is already open,
-    // or it will open the web browser. However, it will set the destination properly.
+    /**
+     * Creates an https:// scheme deep link for Bolt that sets the destination.
+     * This should be triggered after the Bolt app is opened by createBoltDeepLink().
+     * If triggered when the app is not open, it will open the web browser instead.
+     */
     internal fun createBoltDeepLinkWeb(
         pickup: String,
         dropoff: String,
