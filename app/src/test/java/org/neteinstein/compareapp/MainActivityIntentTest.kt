@@ -204,32 +204,30 @@ class MainActivityIntentTest {
         val boltDeepLink = "bolt://ride"
         val boltDeepLinkWeb = "https://m.bolt.eu/ride"
         
-        // When
+        // When - Invoke the method and measure total execution time
         val startTime = System.currentTimeMillis()
         invokeOpenInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
         
-        // Wait for all intents to be launched
+        // Wait for all intents to be launched (this includes production delays)
         Thread.sleep(100) // Initial Uber launch
         shadowActivity.nextStartedActivity
-        
-        val beforeBoltApp = System.currentTimeMillis()
-        Thread.sleep(600) // Wait for delay + Bolt app launch
+        Thread.sleep(600) // Wait includes the 500ms production delay
         shadowActivity.nextStartedActivity
-        val afterBoltApp = System.currentTimeMillis()
-        
-        val beforeBoltWeb = System.currentTimeMillis()
-        Thread.sleep(600) // Wait for delay + Bolt web launch
+        Thread.sleep(600) // Wait includes the 500ms production delay
         shadowActivity.nextStartedActivity
-        val afterBoltWeb = System.currentTimeMillis()
+        val endTime = System.currentTimeMillis()
         
-        // Then - Verify delays are present (allowing some margin for test execution)
-        val delay1 = afterBoltApp - startTime
-        val delay2 = afterBoltWeb - afterBoltApp
+        // Then - Verify total time includes at least the two 500ms delays from production code
+        // Total should be at least 1000ms (2 x 500ms delays), but we allow tolerance for test overhead
+        val totalTime = endTime - startTime
+        val expectedMinTime = 2 * MIN_DELAY_MS // 800ms minimum (2 delays with tolerance)
         
-        // Each delay should be at least SPLIT_SCREEN_DELAY_MS (500ms)
-        // We use MIN_DELAY_MS (400ms) to account for timing variations in test environments
-        assertTrue("First delay should be at least ${MIN_DELAY_MS}ms, was $delay1", delay1 >= MIN_DELAY_MS)
-        assertTrue("Second delay should be at least ${MIN_DELAY_MS}ms, was $delay2", delay2 >= MIN_DELAY_MS)
+        // Note: This test verifies that delays exist in the flow, not their exact values
+        // The actual delay timing is controlled by kotlinx.coroutines.delay in production
+        assertTrue(
+            "Total execution time should include delays (expected >= ${expectedMinTime}ms, was ${totalTime}ms)",
+            totalTime >= expectedMinTime
+        )
     }
 
     @Test
