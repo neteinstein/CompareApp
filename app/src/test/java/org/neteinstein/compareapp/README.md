@@ -79,6 +79,16 @@ Tests for deep link URL encoding:
 - Special character encoding
 - Parameter formatting
 
+### 12. MainActivityIntentTest.kt
+Tests for MainActivity's dual-intent logic for opening Uber and Bolt apps:
+- Verifies correct sequence of intents (Uber -> Bolt app -> Bolt web)
+- Tests proper delays between intent launches (500ms SPLIT_SCREEN_DELAY_MS)
+- Validates Bolt app intent targets correct package ("ee.mtakso.client")
+- Validates all intents have required flags (NEW_TASK, LAUNCH_ADJACENT)
+- Tests error handling for Uber app opening failures
+- Tests error handling for Bolt app opening failures
+- Ensures errors don't crash the app or prevent other intents from launching
+
 ## Running the Tests
 
 ### Using Android Studio
@@ -126,6 +136,7 @@ The tests cover the following areas:
 4. **Edge Cases** - Empty strings, special characters, invalid inputs
 5. **Async Operations** - Coroutine-based geocoding tests
 6. **Coordinate Precision** - Ensures all coordinates have at most 6 decimal places
+7. **Intent Sequencing** - Validates MainActivity's dual-intent flow for split-screen app launching
 
 ## Code Changes for Testability
 
