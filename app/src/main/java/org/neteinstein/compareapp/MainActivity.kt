@@ -72,11 +72,9 @@ class MainActivity : ComponentActivity() {
 
                     kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
 
-                    val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
-                    boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                    boltIntent.setPackage("ee.mtakso.client")
-                    startActivity(boltIntent)
-
+                    val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
+                    boltIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                    startActivity(boltIntentWeb)
                 } catch (e: Exception) {
                     Log.e("MainActivity", "Could not open Bolt app: ${e.message}")
                     withContext(Dispatchers.Main) {

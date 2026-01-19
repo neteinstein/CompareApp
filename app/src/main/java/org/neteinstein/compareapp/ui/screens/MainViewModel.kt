@@ -177,8 +177,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // This deeplink should only be triggered when the App is already opened or it will open Web.
-    // but it will set destination properly
+    // This deep link should only be triggered when the app is already open,
+    // or it will open the web browser. However, it will set the destination properly.
     internal fun createBoltDeepLinkWeb(
         pickup: String,
         dropoff: String,
