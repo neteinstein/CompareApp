@@ -30,6 +30,9 @@ class MainActivityIntentTest {
     companion object {
         // Minimum expected delay tolerance in tests (100ms less than actual 500ms to account for variations)
         private const val MIN_DELAY_MS = 400L
+        
+        // Test wait time to allow coroutines to execute (includes production 500ms delay + margin)
+        private const val TEST_WAIT_MS = 600L
     }
 
     private lateinit var activity: MainActivity
@@ -66,9 +69,9 @@ class MainActivityIntentTest {
     private fun collectAllIntents(shadowActivity: ShadowActivity): List<Intent?> {
         Thread.sleep(100)
         val intent1 = shadowActivity.nextStartedActivity
-        Thread.sleep(600)
+        Thread.sleep(TEST_WAIT_MS)
         val intent2 = shadowActivity.nextStartedActivity
-        Thread.sleep(600)
+        Thread.sleep(TEST_WAIT_MS)
         val intent3 = shadowActivity.nextStartedActivity
         return listOf(intent1, intent2, intent3)
     }
@@ -120,7 +123,7 @@ class MainActivityIntentTest {
         shadowActivity.nextStartedActivity
         
         // Give more time for the delayed Bolt intent
-        Thread.sleep(600)
+        Thread.sleep(TEST_WAIT_MS)
         
         // Then - Verify Bolt app intent was started
         val boltAppIntent = shadowActivity.nextStartedActivity
@@ -152,9 +155,9 @@ class MainActivityIntentTest {
         // Give coroutines time to execute both Bolt intents
         Thread.sleep(100)
         shadowActivity.nextStartedActivity // Skip Uber
-        Thread.sleep(600)
+        Thread.sleep(TEST_WAIT_MS)
         shadowActivity.nextStartedActivity // Skip Bolt app
-        Thread.sleep(600)
+        Thread.sleep(TEST_WAIT_MS)
         
         // Then - Verify Bolt web intent was started
         val boltWebIntent = shadowActivity.nextStartedActivity
@@ -211,9 +214,9 @@ class MainActivityIntentTest {
         // Wait for all intents to be launched (this includes production delays)
         Thread.sleep(100) // Initial Uber launch
         shadowActivity.nextStartedActivity
-        Thread.sleep(600) // Wait includes the 500ms production delay
+        Thread.sleep(TEST_WAIT_MS) // Wait includes the 500ms production delay
         shadowActivity.nextStartedActivity
-        Thread.sleep(600) // Wait includes the 500ms production delay
+        Thread.sleep(TEST_WAIT_MS) // Wait includes the 500ms production delay
         shadowActivity.nextStartedActivity
         val endTime = System.currentTimeMillis()
         
