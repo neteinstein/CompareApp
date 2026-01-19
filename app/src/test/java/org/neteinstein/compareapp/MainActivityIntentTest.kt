@@ -12,6 +12,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowActivity
 
 /**
  * Tests for MainActivity's dual-intent logic for opening Uber and Bolt apps
@@ -25,6 +26,11 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class MainActivityIntentTest {
+
+    companion object {
+        // Minimum expected delay tolerance in tests (100ms less than actual 500ms to account for variations)
+        private const val MIN_DELAY_MS = 400L
+    }
 
     private lateinit var activity: MainActivity
 
@@ -57,13 +63,13 @@ class MainActivityIntentTest {
      * Helper method to collect all three intents with proper delays
      * Returns a list of [Intent?] in the order they were launched
      */
-    private fun collectAllIntents(shadowActivity: android.app.Activity): List<Intent?> {
+    private fun collectAllIntents(shadowActivity: ShadowActivity): List<Intent?> {
         Thread.sleep(100)
-        val intent1 = shadowOf(shadowActivity).nextStartedActivity
+        val intent1 = shadowActivity.nextStartedActivity
         Thread.sleep(600)
-        val intent2 = shadowOf(shadowActivity).nextStartedActivity
+        val intent2 = shadowActivity.nextStartedActivity
         Thread.sleep(600)
-        val intent3 = shadowOf(shadowActivity).nextStartedActivity
+        val intent3 = shadowActivity.nextStartedActivity
         return listOf(intent1, intent2, intent3)
     }
 
@@ -175,7 +181,7 @@ class MainActivityIntentTest {
         
         // When
         invokeOpenInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
-        val intents = collectAllIntents(activity)
+        val intents = collectAllIntents(shadowActivity)
         val (intent1, intent2, intent3) = intents
         
         // Then - Verify the correct sequence
@@ -220,10 +226,10 @@ class MainActivityIntentTest {
         val delay1 = afterBoltApp - startTime
         val delay2 = afterBoltWeb - afterBoltApp
         
-        // Each delay should be at least 500ms (the SPLIT_SCREEN_DELAY_MS)
-        // Using >= 400ms to account for timing variations in test environment
-        assertTrue("First delay should be at least 400ms, was $delay1", delay1 >= 400)
-        assertTrue("Second delay should be at least 400ms, was $delay2", delay2 >= 400)
+        // Each delay should be at least SPLIT_SCREEN_DELAY_MS (500ms)
+        // We use MIN_DELAY_MS (400ms) to account for timing variations in test environments
+        assertTrue("First delay should be at least ${MIN_DELAY_MS}ms, was $delay1", delay1 >= MIN_DELAY_MS)
+        assertTrue("Second delay should be at least ${MIN_DELAY_MS}ms, was $delay2", delay2 >= MIN_DELAY_MS)
     }
 
     @Test
@@ -283,7 +289,7 @@ class MainActivityIntentTest {
         
         // When
         invokeOpenInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
-        val allIntents = collectAllIntents(activity)
+        val allIntents = collectAllIntents(shadowActivity)
         
         // Then - All intents should have the required flags for split screen
         allIntents.forEachIndexed { index, intent ->
