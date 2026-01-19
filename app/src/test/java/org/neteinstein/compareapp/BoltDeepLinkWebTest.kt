@@ -126,12 +126,13 @@ class BoltDeepLinkWebTest {
         val deepLink = viewModel.createBoltDeepLinkWeb(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then - should always use period (.) not comma (,) in coordinates
-        // Extract just the coordinate values to check
-        val coordinatePart = deepLink.substringAfter("pickup_lat=")
+        // Extract coordinate values to verify decimal separator
+        val pickupLatValue = deepLink.substringAfter("pickup_lat=").substringBefore("&")
+        val pickupLngValue = deepLink.substringAfter("pickup_lng=").substringBefore("&")
         assertFalse("Coordinates should not contain comma as decimal separator",
-            coordinatePart.contains(","))
+            pickupLatValue.contains(",") || pickupLngValue.contains(","))
         assertTrue("Coordinates should use period as decimal separator",
-            coordinatePart.contains("."))
+            pickupLatValue.contains(".") && pickupLngValue.contains("."))
     }
 
     @Test
@@ -208,15 +209,16 @@ class BoltDeepLinkWebTest {
         // When
         val deepLink = viewModel.createBoltDeepLinkWeb(pickup, dropoff, pickupCoords, dropoffCoords)
 
-        // Then - special characters should be properly encoded
-        assertFalse("Raw # should not appear in URL", deepLink.contains("#1"))
-        assertFalse("Raw & should not appear in URL (except as parameter separator)", 
-            deepLink.substringAfter("pickup=").substringBefore("&").contains("&"))
+        // Then - special characters should be properly encoded in the URL
+        // Extract the encoded pickup value to verify encoding
+        val pickupValue = deepLink.substringAfter("pickup=").substringBefore("&")
+        assertFalse("Raw # should not appear in encoded pickup value", pickupValue.contains("#"))
         assertFalse("Raw @ should not appear in URL", deepLink.contains("@"))
         
         // Verify proper decoding
         val decodedLink = URLDecoder.decode(deepLink, "UTF-8")
         assertTrue("Decoded should contain #", decodedLink.contains("#"))
+        assertTrue("Decoded should contain &", decodedLink.contains("&"))
         assertTrue("Decoded should contain @", decodedLink.contains("@"))
     }
 
