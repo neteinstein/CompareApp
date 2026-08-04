@@ -15,10 +15,27 @@
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Receive shared/tapped locations, e.g. "Open with" from Maps -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="geo" />
+            </intent-filter>
+
+            <!-- Receive a target location directly from another app -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="compareapp" android:host="dropoff" />
             </intent-filter>
         </activity>
     </application>

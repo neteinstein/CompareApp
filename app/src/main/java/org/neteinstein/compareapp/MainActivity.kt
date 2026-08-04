@@ -10,6 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
@@ -28,11 +30,17 @@ class MainActivity : ComponentActivity() {
         private const val SPLIT_SCREEN_DELAY_MS = 500L
     }
 
+    // Holds the data URI of a location deep link (e.g. "geo:..." shared from Maps).
+    // Re-parsed on each onCreate/onNewIntent; the screen tracks which one it already consumed.
+    private val incomingLocationUri = mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Enable edge-to-edge display to handle window insets properly
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        incomingLocationUri.value = intent?.data
 
         setContent {
             CompareAppTheme {
@@ -40,7 +48,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val locationUri by incomingLocationUri
                     CompareScreen(
+                        incomingLocationUri = locationUri,
                         onOpenDeepLinks = { uberDeepLink, boltDeepLink ->
                             openInSplitScreen(uberDeepLink, boltDeepLink)
                         }
@@ -48,6 +58,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        incomingLocationUri.value = intent.data
     }
 
     private fun openInSplitScreen(uberDeepLink: String, boltDeepLink: String) {
