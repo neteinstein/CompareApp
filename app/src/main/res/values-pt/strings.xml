@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Comparar App</string>
+    <string name="app_tagline">Compare viagens, lado a lado</string>
     <string name="pickup_location">Local de Recolha</string>
     <string name="dropoff_location">Local de Entrega</string>
     <string name="validation_message">Por favor, insira os locais de recolha e entrega</string>
@@ -12,5 +13,6 @@
     <string name="location_permission_denied">Permissão de localização negada</string>
     <string name="location_error">Não foi possível obter a localização atual</string>
     <string name="getting_location">Obtendo localização…</string>
+    <string name="deep_link_dropoff_set">Destino definido a partir do local partilhado</string>
     <string name="info_label">Este aplicativo é usado para comparar preços entre Uber e Bolt. Escolha os locais de recolha e entrega e ambos os aplicativos abrirão em tela dividida já com o destino e custo definidos. Então é só deslizar para tela cheia o mais barato!</string>
 </resources>
