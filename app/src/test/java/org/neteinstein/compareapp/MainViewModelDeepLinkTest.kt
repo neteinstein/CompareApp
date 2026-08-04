@@ -13,8 +13,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
+import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
 import org.neteinstein.compareapp.helpers.TestViewModelFactory
@@ -37,9 +37,9 @@ class MainViewModelDeepLinkTest {
     @Before
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        locationRepository = mock()
-        val appRepository: AppRepository = mock()
-        whenever(appRepository.checkRequiredApps()).thenReturn(Pair(true, true))
+        locationRepository = Mockito.mock(LocationRepository::class.java)
+        val appRepository = Mockito.mock(AppRepository::class.java)
+        `when`(appRepository.checkRequiredApps()).thenReturn(Pair(true, true))
         viewModel = TestViewModelFactory.createTestViewModel(locationRepository, appRepository)
     }
 
@@ -60,7 +60,7 @@ class MainViewModelDeepLinkTest {
 
     @Test
     fun testApplyIncomingDropoffLocation_withoutLabelReverseGeocodes() = runTest {
-        whenever(locationRepository.reverseGeocode(48.8566, 2.3522)).thenReturn("Paris, France")
+        `when`(locationRepository.reverseGeocode(48.8566, 2.3522)).thenReturn("Paris, France")
 
         viewModel.applyIncomingDropoffLocation(48.8566, 2.3522, null)
 
@@ -91,7 +91,7 @@ class MainViewModelDeepLinkTest {
 
     @Test
     fun testPrepareDeepLinks_reusesStoredDropoffCoordinatesWithoutReGeocoding() = runTest {
-        whenever(locationRepository.geocodeAddress("Start")).thenReturn(Pair(40.7128, -74.0060))
+        `when`(locationRepository.geocodeAddress("Start")).thenReturn(Pair(40.7128, -74.0060))
 
         viewModel.updatePickup("Start")
         viewModel.applyIncomingDropoffLocation(48.8566, 2.3522, "Paris")
