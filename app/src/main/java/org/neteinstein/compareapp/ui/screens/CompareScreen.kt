@@ -71,6 +71,11 @@ fun CompareScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    val locationErrorText = stringResource(R.string.location_error)
+    val locationPermissionDeniedText = stringResource(R.string.location_permission_denied)
+    val validationMessageText = stringResource(R.string.validation_message)
+    val errorPrepareDeeplinksText = stringResource(R.string.error_prepare_deeplinks)
+
     // Location permission launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -82,19 +87,11 @@ fun CompareScreen(
             viewModel.fetchCurrentLocation(
                 onLocationReceived = { _, _, _ -> },
                 onError = {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.location_error),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(context, locationErrorText, Toast.LENGTH_SHORT).show()
                 }
             )
         } else {
-            Toast.makeText(
-                context,
-                context.getString(R.string.location_permission_denied),
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(context, locationPermissionDeniedText, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -103,11 +100,7 @@ fun CompareScreen(
             viewModel.fetchCurrentLocation(
                 onLocationReceived = { _, _, _ -> },
                 onError = {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.location_error),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(context, locationErrorText, Toast.LENGTH_SHORT).show()
                 }
             )
         } else {
@@ -269,11 +262,7 @@ fun CompareScreen(
                     Button(
                         onClick = {
                             if (uiState.pickup.isEmpty() || uiState.dropoff.isEmpty()) {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.validation_message),
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, validationMessageText, Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
@@ -282,11 +271,7 @@ fun CompareScreen(
                                     onOpenDeepLinks(uberDeepLink, boltDeepLink)
                                 },
                                 onError = {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.error_prepare_deeplinks),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    Toast.makeText(context, errorPrepareDeeplinksText, Toast.LENGTH_SHORT).show()
                                 }
                             )
                         },
