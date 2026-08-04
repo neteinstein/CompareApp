@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The device's current location is automatically used as the pickup
 
 ### Changed
+- Redesigned the app launcher icon with a bold diagonal split background and a car +
+  lightning-bolt mark, giving the app its own distinct visual identity inspired by (but
+  not copying) the look and feel of ride-hailing apps
 - Redesigned the main screen with a custom Material3 color scheme, a card-based layout,
   and icons for a more polished look
 
