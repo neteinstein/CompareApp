@@ -29,6 +29,11 @@ jobs:
       - name: Run Lint
         run: ./gradlew lint --no-daemon
 
+      - name: Print lint report on failure
+        if: failure()
+        run: |
+          find app/build -iname "lint-results-debug.txt" -exec cat {} \; || true
+
       - name: Upload lint results
         if: always()
         uses: actions/upload-artifact@v4
