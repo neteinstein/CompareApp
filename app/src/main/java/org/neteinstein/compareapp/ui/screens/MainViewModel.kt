@@ -182,7 +182,8 @@ class MainViewModel @Inject constructor(
         return String.format(Locale.US, "%.6f", value)
     }
 
-    // This deeplink opens the app, but won't work to set destination...
+    // Opens the Bolt app via its custom scheme; setting the destination requires
+    // following up with the HTTPS link from createBoltDeepLinkWeb once the app is open.
     internal fun createBoltDeepLink(
         pickup: String,
         dropoff: String,
