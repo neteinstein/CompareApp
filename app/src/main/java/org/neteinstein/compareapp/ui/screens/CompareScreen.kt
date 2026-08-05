@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TripOrigin
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Button
@@ -65,6 +66,7 @@ import org.neteinstein.compareapp.utils.DeepLinkLocationParser
 fun CompareScreen(
     viewModel: MainViewModel = hiltViewModel(),
     incomingLocationUri: Uri? = null,
+    onOpenSettings: () -> Unit = {},
     onOpenDeepLinks: (uberDeepLink: String, boltDeepLink: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -167,7 +169,19 @@ fun CompareScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AppHeader()
+            Box(modifier = Modifier.fillMaxWidth()) {
+                AppHeader()
+                IconButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = stringResource(R.string.settings_cd),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             warningMessage?.let { message ->
                 WarningBanner(message = message, modifier = Modifier.padding(top = 20.dp))

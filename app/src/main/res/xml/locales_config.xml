@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backs android:localeConfig on the <application> tag (see AndroidManifest.xml). Since
+     targetSdk is already 36 (>= 33), listing the locales this app ships translations for here is
+     all that's needed for Android to show "App language" in system Settings and apply the chosen
+     locale to this app's resources - no runtime code required. Keep in sync with the actual
+     values-<locale>/ resource directories this app ships (currently English, the default
+     values/ directory with no qualifier, plus Portuguese). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="pt" />
+</locale-config>

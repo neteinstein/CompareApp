@@ -4,6 +4,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Gates AppUpdateInstaller.canInstallPackages()/installPackage() (the Settings screen's
+         "Update to latest" button) - granting this is a special, per-app "install unknown apps"
+         toggle the user must flip in system Settings; the permission's mere presence here does
+         not enable sideloading by itself, it only lets the app ask the OS whether it's allowed. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".CompareApplication"
@@ -11,6 +16,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="Compare App"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
         <activity
@@ -38,6 +44,36 @@
                 <data android:scheme="compareapp" android:host="dropoff" />
             </intent-filter>
         </activity>
+
+        <!-- Lets AppUpdateInstaller hand a downloaded update APK (cached under
+             context.cacheDir/updates/ by UpdateRepositoryImpl) to the system Package Installer
+             as a content:// Uri - a plain file:// Uri would throw FileUriExposedException under
+             this app's targetSdk. The authority here must match AppUpdateInstaller's
+             FILE_PROVIDER_AUTHORITY_SUFFIX exactly, and update_file_paths.xml's cache-path must
+             match UpdateRepositoryImpl's download directory exactly. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.update.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_file_paths" />
+        </provider>
+
+        <!-- Deletes the APK UpdateRepositoryImpl downloaded to context.cacheDir once this app
+             finishes installing it, so it doesn't sit there wasting space. MY_PACKAGE_REPLACED is
+             one of the few broadcasts exempted from Android 8+'s implicit-broadcast background
+             restrictions, and is only delivered to the app that was just updated - see
+             UpdateApkCleanupReceiver. Must be manifest-declared (not registered at runtime) since
+             the app process is commonly killed during its own update install. -->
+        <receiver
+            android:name=".receiver.UpdateApkCleanupReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
     <queries>
         <package android:name="com.ubercab" />
