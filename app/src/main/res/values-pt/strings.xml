@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Comparar App</string>
+    <string name="app_tagline">Compare viagens, lado a lado</string>
     <string name="pickup_location">Local de Recolha</string>
     <string name="dropoff_location">Local de Entrega</string>
     <string name="validation_message">Por favor, insira os locais de recolha e entrega</string>
@@ -8,9 +9,30 @@
     <string name="compare">Comparar</string>
     <string name="error_bolt">Não foi possível abrir o aplicativo Bolt</string>
     <string name="error_uber">Não foi possível abrir o aplicativo Uber</string>
+    <string name="error_prepare_deeplinks">Não foi possível preparar os dados de localização. Verifique os endereços.</string>
     <string name="use_current_location">Usar localização atual</string>
     <string name="location_permission_denied">Permissão de localização negada</string>
     <string name="location_error">Não foi possível obter a localização atual</string>
     <string name="getting_location">Obtendo localização…</string>
+    <string name="deep_link_dropoff_set">Destino definido a partir do local partilhado</string>
     <string name="info_label">Este aplicativo é usado para comparar preços entre Uber e Bolt. Escolha os locais de recolha e entrega e ambos os aplicativos abrirão em tela dividida já com o destino e custo definidos. Então é só deslizar para tela cheia o mais barato!</string>
+
+    <string name="settings_cd">Configurações</string>
+    <string name="settings_title">Configurações</string>
+    <string name="settings_back">Voltar</string>
+
+    <string name="settings_language_section_title">Idioma</string>
+    <string name="settings_language_info">Altere o idioma de exibição deste aplicativo nas configurações do seu dispositivo.</string>
+    <string name="settings_language_button">Alterar idioma</string>
+
+    <string name="settings_update_section_title">Atualizações</string>
+    <string name="settings_update_info">Verifica a página de releases deste aplicativo no GitHub em busca de uma versão mais recente e a baixa de lá - sem precisar da Play Store.</string>
+    <string name="settings_update_button">Atualizar para a mais recente</string>
+    <string name="settings_update_checking">Verificando atualizações…</string>
+    <string name="settings_update_up_to_date">Você está na versão mais recente (%1$s).</string>
+    <string name="settings_update_available">Uma nova versão está disponível (%1$s).</string>
+    <string name="settings_update_downloading">Baixando atualização…</string>
+    <string name="settings_update_sideloading_warning">Para instalar essa atualização, permita que este aplicativo instale apps desconhecidos.</string>
+    <string name="settings_update_enable_sideloading_cta">Ativar</string>
+    <string name="settings_update_failed">Falha ao verificar atualização: %1$s</string>
 </resources>

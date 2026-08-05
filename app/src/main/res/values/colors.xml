@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#85BB65</color>
+    <!-- Diagonal launcher background: dark charcoal to green, evoking a ride-hailing +
+         price-comparison feel without reusing any single brand's exact palette. -->
+    <color name="ic_launcher_background_start">#17181C</color>
+    <color name="ic_launcher_background_end">#1FC77D</color>
+    <color name="ic_launcher_bolt_accent">#3AE28E</color>
 </resources>

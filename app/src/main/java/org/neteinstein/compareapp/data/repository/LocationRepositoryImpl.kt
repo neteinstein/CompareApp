@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.util.Log
-import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
@@ -39,6 +38,8 @@ class LocationRepositoryImpl @Inject constructor(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    // Permission is verified above via hasLocationPermission(); lint can't see through that
+    // custom check, so the call below is suppressed rather than flagged as unguarded.
     @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(): Location? {
         if (!hasLocationPermission()) {

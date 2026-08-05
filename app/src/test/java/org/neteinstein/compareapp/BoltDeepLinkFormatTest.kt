@@ -8,6 +8,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
 import org.neteinstein.compareapp.helpers.TestViewModelFactory
@@ -33,6 +34,7 @@ class BoltDeepLinkFormatTest {
     fun setup() {
         val mockLocationRepo = Mockito.mock(LocationRepository::class.java)
         val mockAppRepo = Mockito.mock(AppRepository::class.java)
+        `when`(mockAppRepo.checkRequiredApps()).thenReturn(Pair(true, true))
         viewModel = TestViewModelFactory.createTestViewModel(mockLocationRepo, mockAppRepo)
     }
 

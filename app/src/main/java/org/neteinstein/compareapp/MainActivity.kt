@@ -6,10 +6,15 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.neteinstein.compareapp.ui.screens.CompareScreen
+import org.neteinstein.compareapp.ui.screens.SettingsRoute
 import org.neteinstein.compareapp.ui.theme.CompareAppTheme
 
 @AndroidEntryPoint
@@ -28,11 +34,22 @@ class MainActivity : ComponentActivity() {
         private const val SPLIT_SCREEN_DELAY_MS = 500L
     }
 
+    // No Navigation-Compose in this app: opening Settings (the top-right button on the main
+    // screen) is just a local flag flipped back by Settings' own back arrow or the system back
+    // gesture/button (see BackHandler below).
+    private enum class Screen { MAIN, SETTINGS }
+
+    // Holds the data URI of a location deep link (e.g. "geo:..." shared from Maps).
+    // Re-parsed on each onCreate/onNewIntent; the screen tracks which one it already consumed.
+    private val incomingLocationUri = mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Enable edge-to-edge display to handle window insets properly
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        incomingLocationUri.value = intent?.data
 
         setContent {
             CompareAppTheme {
@@ -40,14 +57,31 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CompareScreen(
-                        onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
-                            openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
+                    var screen by rememberSaveable { mutableStateOf(Screen.MAIN) }
+                    BackHandler(enabled = screen != Screen.MAIN) { screen = Screen.MAIN }
+
+                    when (screen) {
+                        Screen.SETTINGS -> SettingsRoute(onBack = { screen = Screen.MAIN })
+                        Screen.MAIN -> {
+                            val locationUri by incomingLocationUri
+                            CompareScreen(
+                                incomingLocationUri = locationUri,
+                                onOpenSettings = { screen = Screen.SETTINGS },
+                                onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
+                                    openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        incomingLocationUri.value = intent.data
     }
 
     private fun openInSplitScreen(uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) {

@@ -52,10 +52,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Only apply signing config if keystore is available
-            if (System.getenv("KEYSTORE_FILE")) {
-                signingConfig signingConfigs.release
-            }
+            // Sign with the real release key when CI provides one; otherwise fall back to debug
+            // signing so `./gradlew assembleRelease` still works on a developer machine without
+            // the release signing secrets configured.
+            signingConfig System.getenv("KEYSTORE_FILE") ? signingConfigs.release : signingConfigs.debug
         }
     }
 
@@ -70,6 +70,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

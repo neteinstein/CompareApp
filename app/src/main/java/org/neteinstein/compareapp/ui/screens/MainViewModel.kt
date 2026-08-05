@@ -49,7 +49,35 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateDropoff(value: String) {
-        _uiState.update { it.copy(dropoff = value) }
+        _uiState.update { it.copy(dropoff = value, dropoffCoordinates = null) }
+    }
+
+    /**
+     * Prepopulates the dropoff location from an incoming deep link (e.g. a shared
+     * map location). When only coordinates are available, they're reverse geocoded
+     * in the background so the field shows a readable address once ready.
+     */
+    fun applyIncomingDropoffLocation(latitude: Double?, longitude: Double?, label: String?) {
+        val trimmedLabel = label?.trim()?.takeIf { it.isNotBlank() }
+
+        if (latitude != null && longitude != null) {
+            _uiState.update {
+                it.copy(
+                    dropoff = trimmedLabel ?: "Lat: $latitude, Lng: $longitude",
+                    dropoffCoordinates = Pair(latitude, longitude)
+                )
+            }
+            if (trimmedLabel == null) {
+                viewModelScope.launch {
+                    val address = locationRepository.reverseGeocode(latitude, longitude)
+                    if (address != null) {
+                        _uiState.update { it.copy(dropoff = address) }
+                    }
+                }
+            }
+        } else if (trimmedLabel != null) {
+            _uiState.update { it.copy(dropoff = trimmedLabel, dropoffCoordinates = null) }
+        }
     }
 
     fun hasLocationPermission(): Boolean {
@@ -100,9 +128,10 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             try {
-                val pickupCoords = currentState.pickupCoordinates 
+                val pickupCoords = currentState.pickupCoordinates
                     ?: locationRepository.geocodeAddress(currentState.pickup)
-                val dropoffCoords = locationRepository.geocodeAddress(currentState.dropoff)
+                val dropoffCoords = currentState.dropoffCoordinates
+                    ?: locationRepository.geocodeAddress(currentState.dropoff)
 
                 val uberDeepLink = createUberDeepLink(
                     currentState.pickup, 
@@ -211,5 +240,6 @@ data class CompareUiState(
     val isBoltInstalled: Boolean = false,
     val isUsingDeviceLocation: Boolean = false,
     val isGettingLocation: Boolean = false,
-    val pickupCoordinates: Pair<Double, Double>? = null
+    val pickupCoordinates: Pair<Double, Double>? = null,
+    val dropoffCoordinates: Pair<Double, Double>? = null
 )

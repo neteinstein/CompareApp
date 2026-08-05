@@ -12,6 +12,7 @@ CompareApp simplifies the process of comparing ride prices between Uber and Bolt
 - **Split Screen Mode**: Automatically opens Uber and Bolt apps side-by-side
 - **Smart Geocoding**: Converts text addresses to coordinates for accurate location matching
 - **Deep Linking**: Seamlessly integrates with Uber and Bolt apps using their deep link APIs
+- **Incoming Location Links**: Share a location from Maps ("Open with" a `geo:` link) to prepopulate the dropoff field, using your current location as pickup
 - **Location Services**: Supports current location detection with Google Play Services
 - **Offline Fallback**: Gracefully handles geocoding failures with text-based fallbacks
 - **MVVM Architecture**: Clean separation of concerns with Hilt dependency injection
