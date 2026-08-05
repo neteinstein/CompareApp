@@ -3,6 +3,7 @@ package org.neteinstein.compareapp.utils
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,8 +21,19 @@ import javax.inject.Singleton
 class AppUpdateInstaller @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    /** True once the user has allowed this app to install packages from outside the Play Store. */
-    fun canInstallPackages(): Boolean = context.packageManager.canRequestPackageInstalls()
+    /**
+     * True once the user has allowed this app to install packages from outside the Play Store.
+     * The per-app permission this checks was introduced in API 26; before that, sideloading was
+     * gated only by the device-wide "Unknown sources" toggle, so there's nothing app-specific to
+     * check and this app was always allowed to try.
+     */
+    fun canInstallPackages(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.packageManager.canRequestPackageInstalls()
+        } else {
+            true
+        }
+    }
 
     /** Deep-links into this app's own "install unknown apps" toggle in system Settings. */
     fun openInstallPermissionSettings() {

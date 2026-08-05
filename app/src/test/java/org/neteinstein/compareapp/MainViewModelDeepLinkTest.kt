@@ -97,7 +97,7 @@ class MainViewModelDeepLinkTest {
         viewModel.applyIncomingDropoffLocation(48.8566, 2.3522, "Paris")
 
         var boltLink: String? = null
-        viewModel.prepareDeepLinks(onSuccess = { _, bolt -> boltLink = bolt })
+        viewModel.prepareDeepLinks(onSuccess = { _, bolt, _ -> boltLink = bolt })
 
         // If the dropoff coordinates from the deep link weren't reused, "Paris" would have
         // been re-geocoded via the mock (unstubbed -> null), forcing the fallback format.

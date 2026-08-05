@@ -30,10 +30,9 @@ class UpdateApkCleanupReceiver : BroadcastReceiver() {
     lateinit var updateRepository: UpdateRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-        // Hilt's @AndroidEntryPoint field injection for BroadcastReceivers happens inside
-        // super.onReceive() - updateRepository is not populated until this call returns.
-        super.onReceive(context, intent)
-
+        // Hilt's @AndroidEntryPoint bytecode transform injects fields for BroadcastReceivers by
+        // instrumenting the start of this method directly - unlike Activity/Service/Fragment,
+        // BroadcastReceiver.onReceive() is abstract with no super implementation to call into.
         if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
 
         val pendingResult = goAsync()

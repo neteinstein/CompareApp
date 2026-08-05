@@ -117,7 +117,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun prepareDeepLinks(
-        onSuccess: (uberDeepLink: String, boltDeepLink: String) -> Unit,
+        onSuccess: (uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) -> Unit,
         onError: () -> Unit = {}
     ) {
         val currentState = _uiState.value
@@ -146,7 +146,14 @@ class MainViewModel @Inject constructor(
                     dropoffCoords
                 )
 
-                onSuccess(uberDeepLink, boltDeepLink)
+                val boltDeepLinkWeb = createBoltDeepLinkWeb(
+                    currentState.pickup,
+                    currentState.dropoff,
+                    pickupCoords,
+                    dropoffCoords
+                )
+
+                onSuccess(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error preparing deep links", e)
                 onError()
@@ -167,23 +174,61 @@ class MainViewModel @Inject constructor(
         return "uber://?action=setPickup&pickup[formatted_address]=$pickupEncoded&dropoff[formatted_address]=$dropoffEncoded"
     }
 
+    /**
+     * Formats a coordinate value to exactly 6 decimal places using US locale.
+     * This ensures consistent formatting for Bolt's API compatibility.
+     */
+    private fun formatCoordinate(value: Double): String {
+        return String.format(Locale.US, "%.6f", value)
+    }
+
+    // Opens the Bolt app via its custom scheme; setting the destination requires
+    // following up with the HTTPS link from createBoltDeepLinkWeb once the app is open.
     internal fun createBoltDeepLink(
         pickup: String,
         dropoff: String,
         pickupCoords: Pair<Double, Double>?,
         dropoffCoords: Pair<Double, Double>?
     ): String {
+        Log.d("MainViewModel", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
         return if (pickupCoords != null && dropoffCoords != null) {
-            // Format coordinates with exactly 6 decimal places to ensure compatibility with Bolt API
-            // Using Locale.US to ensure consistent decimal separator (period, not comma)
-            val pickupLat = String.format(Locale.US, "%.6f", pickupCoords.first)
-            val pickupLng = String.format(Locale.US, "%.6f", pickupCoords.second)
-            val dropoffLat = String.format(Locale.US, "%.6f", dropoffCoords.first)
-            val dropoffLng = String.format(Locale.US, "%.6f", dropoffCoords.second)
-            "bolt://ride?pickup_lat=${pickupLat}&pickup_lng=${pickupLng}&destination_lat=${dropoffLat}&destination_lng=${dropoffLng}"
+
+            val pickupLat = formatCoordinate(pickupCoords.first)
+            val pickupLng = formatCoordinate(pickupCoords.second)
+            val destLat = formatCoordinate(dropoffCoords.first)
+            val destLng = formatCoordinate(dropoffCoords.second)
+
+            "bolt://ride?pickup_lat=$pickupLat&pickup_lng=$pickupLng&destination_lat=$destLat&destination_lng=$destLng"
         } else {
             Log.w("MainViewModel", "Geocoding failed, using fallback Bolt deep link format")
-            "bolt://ride?pickup=0&destination=0"
+            val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
+            val dropoffEncoded = URLEncoder.encode(dropoff, "UTF-8")
+            "bolt://ride?pickup=$pickupEncoded&destination=$dropoffEncoded"
+        }
+    }
+
+    // This deep link should only be triggered when the app is already open,
+    // or it will open the web browser. However, it will set the destination properly.
+    internal fun createBoltDeepLinkWeb(
+        pickup: String,
+        dropoff: String,
+        pickupCoords: Pair<Double, Double>?,
+        dropoffCoords: Pair<Double, Double>?
+    ): String {
+        Log.d("MainViewModel", "pickup: $pickup, dropoff: $dropoff, pickupCoords: $pickupCoords, dropoffCoords: $dropoffCoords")
+        return if (pickupCoords != null && dropoffCoords != null) {
+          
+            val pickupLat = formatCoordinate(pickupCoords.first)
+            val pickupLng = formatCoordinate(pickupCoords.second)
+            val destLat = formatCoordinate(dropoffCoords.first)
+            val destLng = formatCoordinate(dropoffCoords.second)
+
+            "https://bolt.eu/ride/?pickup_lat=$pickupLat&pickup_lng=$pickupLng&destination_lat=$destLat&destination_lng=$destLng"
+        } else {
+            Log.w("MainViewModel", "Geocoding failed, using fallback Bolt web link format")
+            val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
+            val dropoffEncoded = URLEncoder.encode(dropoff, "UTF-8")
+            "https://bolt.eu/ride/?pickup=$pickupEncoded&destination=$dropoffEncoded"
         }
     }
 }
