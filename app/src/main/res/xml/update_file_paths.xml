@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backs app/src/main/AndroidManifest.xml's FileProvider <provider> entry - scopes the
+  content:// Uris AppUpdateInstaller can request to exactly the cache subdirectory
+  UpdateRepositoryImpl downloads the update APK into (context.cacheDir/updates/).
+-->
+<paths>
+    <cache-path
+        name="app_updates"
+        path="updates/" />
+</paths>

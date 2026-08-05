@@ -8,6 +8,8 @@ import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.AppRepositoryImpl
 import org.neteinstein.compareapp.data.repository.LocationRepository
 import org.neteinstein.compareapp.data.repository.LocationRepositoryImpl
+import org.neteinstein.compareapp.data.repository.UpdateRepository
+import org.neteinstein.compareapp.data.repository.UpdateRepositoryImpl
 import javax.inject.Singleton
 
 @Module
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindAppRepository(
         appRepositoryImpl: AppRepositoryImpl
     ): AppRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUpdateRepository(
+        updateRepositoryImpl: UpdateRepositoryImpl
+    ): UpdateRepository
 }

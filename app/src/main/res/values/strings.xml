@@ -16,4 +16,23 @@
     <string name="getting_location">Getting location…</string>
     <string name="deep_link_dropoff_set">Destination set from shared location</string>
     <string name="info_label">This app is used to compare prices between Uber and Bolt. Choose the pickup and dropoff locations and both app will open in split screen already with the destination and cost set. Then it\'s just swiping to full screen the cheapest!</string>
+
+    <string name="settings_cd">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+
+    <string name="settings_language_section_title">Language</string>
+    <string name="settings_language_info">Change the language this app is displayed in from your device\'s Settings.</string>
+    <string name="settings_language_button">Change language</string>
+
+    <string name="settings_update_section_title">Updates</string>
+    <string name="settings_update_info">Checks this app\'s GitHub releases page for a newer version and downloads it from there - no Play Store needed.</string>
+    <string name="settings_update_button">Update to latest</string>
+    <string name="settings_update_checking">Checking for updates…</string>
+    <string name="settings_update_up_to_date">You\'re on the latest version (%1$s).</string>
+    <string name="settings_update_available">A new version is available (%1$s).</string>
+    <string name="settings_update_downloading">Downloading update…</string>
+    <string name="settings_update_sideloading_warning">To install this update, allow this app to install unknown apps.</string>
+    <string name="settings_update_enable_sideloading_cta">Enable</string>
+    <string name="settings_update_failed">Update check failed: %1$s</string>
 </resources>
