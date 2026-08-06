@@ -4,10 +4,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.neteinstein.compareapp.data.repository.AddressSuggestion
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
 import java.net.URLEncoder
@@ -22,6 +25,9 @@ class MainViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CompareUiState())
     val uiState = _uiState.asStateFlow()
+
+    private var pickupSuggestionsJob: Job? = null
+    private var dropoffSuggestionsJob: Job? = null
 
     init {
         checkInstalledApps()
@@ -39,17 +45,67 @@ class MainViewModel @Inject constructor(
     }
 
     fun updatePickup(value: String) {
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 pickup = value,
                 isUsingDeviceLocation = false,
-                pickupCoordinates = null
+                pickupCoordinates = null,
+                pickupSuggestions = emptyList()
+            )
+        }
+        searchPickupSuggestions(value)
+    }
+
+    fun updateDropoff(value: String) {
+        _uiState.update { it.copy(dropoff = value, dropoffCoordinates = null, dropoffSuggestions = emptyList()) }
+        searchDropoffSuggestions(value)
+    }
+
+    fun selectPickupSuggestion(suggestion: AddressSuggestion) {
+        pickupSuggestionsJob?.cancel()
+        _uiState.update {
+            it.copy(
+                pickup = suggestion.fullAddress,
+                pickupCoordinates = Pair(suggestion.latitude, suggestion.longitude),
+                isUsingDeviceLocation = false,
+                pickupSuggestions = emptyList()
             )
         }
     }
 
-    fun updateDropoff(value: String) {
-        _uiState.update { it.copy(dropoff = value, dropoffCoordinates = null) }
+    fun selectDropoffSuggestion(suggestion: AddressSuggestion) {
+        dropoffSuggestionsJob?.cancel()
+        _uiState.update {
+            it.copy(
+                dropoff = suggestion.fullAddress,
+                dropoffCoordinates = Pair(suggestion.latitude, suggestion.longitude),
+                dropoffSuggestions = emptyList()
+            )
+        }
+    }
+
+    private fun searchPickupSuggestions(query: String) {
+        pickupSuggestionsJob?.cancel()
+        if (query.trim().length < MIN_SUGGESTION_QUERY_LENGTH) {
+            return
+        }
+        pickupSuggestionsJob = viewModelScope.launch {
+            delay(SUGGESTION_DEBOUNCE_MS)
+            val results = locationRepository.searchAddresses(query)
+            _uiState.update { it.copy(pickupSuggestions = results) }
+        }
+    }
+
+    private fun searchDropoffSuggestions(query: String) {
+        dropoffSuggestionsJob?.cancel()
+        if (query.trim().length < MIN_SUGGESTION_QUERY_LENGTH) {
+            return
+        }
+        dropoffSuggestionsJob = viewModelScope.launch {
+            delay(SUGGESTION_DEBOUNCE_MS)
+            val results = locationRepository.searchAddresses(query)
+            _uiState.update { it.copy(dropoffSuggestions = results) }
+        }
     }
 
     /**
@@ -60,11 +116,13 @@ class MainViewModel @Inject constructor(
     fun applyIncomingDropoffLocation(latitude: Double?, longitude: Double?, label: String?) {
         val trimmedLabel = label?.trim()?.takeIf { it.isNotBlank() }
 
+        dropoffSuggestionsJob?.cancel()
         if (latitude != null && longitude != null) {
             _uiState.update {
                 it.copy(
                     dropoff = trimmedLabel ?: "Lat: $latitude, Lng: $longitude",
-                    dropoffCoordinates = Pair(latitude, longitude)
+                    dropoffCoordinates = Pair(latitude, longitude),
+                    dropoffSuggestions = emptyList()
                 )
             }
             if (trimmedLabel == null) {
@@ -76,7 +134,7 @@ class MainViewModel @Inject constructor(
                 }
             }
         } else if (trimmedLabel != null) {
-            _uiState.update { it.copy(dropoff = trimmedLabel, dropoffCoordinates = null) }
+            _uiState.update { it.copy(dropoff = trimmedLabel, dropoffCoordinates = null, dropoffSuggestions = emptyList()) }
         }
     }
 
@@ -96,11 +154,13 @@ class MainViewModel @Inject constructor(
                     val address = locationRepository.reverseGeocode(location.latitude, location.longitude)
                         ?: "Lat: ${location.latitude}, Lng: ${location.longitude}"
                     
-                    _uiState.update { 
+                    pickupSuggestionsJob?.cancel()
+                    _uiState.update {
                         it.copy(
                             pickup = address,
                             pickupCoordinates = Pair(location.latitude, location.longitude),
-                            isUsingDeviceLocation = true
+                            isUsingDeviceLocation = true,
+                            pickupSuggestions = emptyList()
                         )
                     }
                     onLocationReceived(location.latitude, location.longitude, address)
@@ -231,6 +291,11 @@ class MainViewModel @Inject constructor(
             "https://bolt.eu/ride/?pickup=$pickupEncoded&destination=$dropoffEncoded"
         }
     }
+
+    companion object {
+        private const val MIN_SUGGESTION_QUERY_LENGTH = 3
+        private const val SUGGESTION_DEBOUNCE_MS = 300L
+    }
 }
 
 data class CompareUiState(
@@ -242,5 +307,7 @@ data class CompareUiState(
     val isUsingDeviceLocation: Boolean = false,
     val isGettingLocation: Boolean = false,
     val pickupCoordinates: Pair<Double, Double>? = null,
-    val dropoffCoordinates: Pair<Double, Double>? = null
+    val dropoffCoordinates: Pair<Double, Double>? = null,
+    val pickupSuggestions: List<AddressSuggestion> = emptyList(),
+    val dropoffSuggestions: List<AddressSuggestion> = emptyList()
 )

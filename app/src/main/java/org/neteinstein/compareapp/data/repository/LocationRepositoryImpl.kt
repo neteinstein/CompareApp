@@ -100,4 +100,28 @@ class LocationRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun searchAddresses(query: String): List<AddressSuggestion> {
+        return withContext(Dispatchers.IO) {
+            try {
+                @Suppress("DEPRECATION")
+                val addresses = geocoder.getFromLocationName(query, MAX_SUGGESTIONS)
+                addresses.orEmpty().mapNotNull { address ->
+                    val addressLine = address.getAddressLine(0) ?: return@mapNotNull null
+                    AddressSuggestion(
+                        fullAddress = addressLine,
+                        latitude = MathUtils.roundDecimal(address.latitude),
+                        longitude = MathUtils.roundDecimal(address.longitude)
+                    )
+                }
+            } catch (e: IOException) {
+                Log.e("LocationRepository", "Address search failed for query: $query", e)
+                emptyList()
+            }
+        }
+    }
+
+    companion object {
+        private const val MAX_SUGGESTIONS = 5
+    }
 }
