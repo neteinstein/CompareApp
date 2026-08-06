@@ -16,22 +16,59 @@ data class DeepLinkLocation(
 /**
  * Parses incoming "share a location with this app" deep links.
  *
- * Supports two formats:
+ * Supports three formats:
  * - Standard Android `geo:` URIs (e.g. produced by Google Maps "Share" -> "Open with"),
  *   in the `geo:lat,lng`, `geo:lat,lng?q=...` and `geo:0,0?q=lat,lng(Label)` shapes.
  * - The app's own `compareapp://dropoff?lat=..&lng=..&address=..` scheme for direct linking.
+ * - Google Maps `https://www.google.com/maps/...` / `https://maps.google.com/...` web URLs
+ *   (e.g. resolved from the maps.app.goo.gl short link Google Maps' "Share" button sends -
+ *   see [org.neteinstein.compareapp.utils.MapsShareLinkResolver]).
  */
 object DeepLinkLocationParser {
 
     private val COORDS_REGEX = Regex("""^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$""")
     private val LABELED_COORDS_REGEX = Regex("""^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)\((.*)\)$""")
+    private val AT_COORDS_REGEX = Regex("""/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)""")
+    private val MAPS_QUERY_COORD_PARAMS = listOf("q", "ll", "daddr")
 
     fun parse(uri: Uri): DeepLinkLocation? {
         return when (uri.scheme?.lowercase()) {
             "geo" -> parseGeoUri(uri)
             "compareapp" -> parseAppUri(uri)
+            "http", "https" -> parseGoogleMapsWebUri(uri)
             else -> null
         }
+    }
+
+    private fun parseGoogleMapsWebUri(uri: Uri): DeepLinkLocation? {
+        val host = uri.host?.lowercase() ?: return null
+        if (host != "google.com" && !host.endsWith(".google.com")) return null
+
+        AT_COORDS_REGEX.find(uri.encodedPath.orEmpty())?.let { match ->
+            val latitude = match.groupValues[1].toDouble()
+            val longitude = match.groupValues[2].toDouble()
+            return DeepLinkLocation(latitude, longitude, extractPlaceLabel(uri))
+        }
+
+        for (param in MAPS_QUERY_COORD_PARAMS) {
+            val value = uri.getQueryParameter(param) ?: continue
+            COORDS_REGEX.find(value)?.let { match ->
+                val latitude = match.groupValues[1].toDouble()
+                val longitude = match.groupValues[2].toDouble()
+                return DeepLinkLocation(latitude, longitude, null)
+            }
+        }
+
+        return null
+    }
+
+    // Google Maps "place" URLs embed the label as a path segment, e.g.
+    // https://www.google.com/maps/place/Golden+Gate+Bridge/@37.81,-122.47,17z/...
+    private fun extractPlaceLabel(uri: Uri): String? {
+        val segments = uri.pathSegments
+        val placeIndex = segments.indexOf("place")
+        if (placeIndex == -1 || placeIndex + 1 >= segments.size) return null
+        return segments[placeIndex + 1].replace('+', ' ').takeIf { it.isNotBlank() }
     }
 
     private fun parseAppUri(uri: Uri): DeepLinkLocation? {

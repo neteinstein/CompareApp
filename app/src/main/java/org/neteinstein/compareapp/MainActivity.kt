@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
         // Enable edge-to-edge display to handle window insets properly
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        incomingLocationUri.value = intent?.data
+        incomingLocationUri.value = locationUriFromIntent(intent)
 
         setContent {
             CompareAppTheme {
@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        incomingLocationUri.value = intent.data
+        incomingLocationUri.value = locationUriFromIntent(intent)
     }
 
     private fun openInSplitScreen(uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) {
@@ -122,5 +122,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+// The first http(s) URL found in a shared text block, e.g. Google Maps' "Share" text which
+// looks like "Place Name\nhttps://maps.app.goo.gl/xxxx".
+private val SHARED_TEXT_URL_REGEX = Regex("""https?://\S+""")
+
+/**
+ * Extracts the location URI to hand off to [org.neteinstein.compareapp.utils.DeepLinkLocationParser]
+ * from an incoming intent. Handles both "Open with" (ACTION_VIEW, e.g. a `geo:` URI) and Google
+ * Maps' "Share" button (ACTION_SEND text/plain, whose [Intent.EXTRA_TEXT] contains a maps URL
+ * rather than [Intent.data]). Top-level so it's unit-testable without instantiating the activity.
+ */
+internal fun locationUriFromIntent(intent: Intent?): Uri? {
+    intent ?: return null
+    return when (intent.action) {
+        Intent.ACTION_VIEW -> intent.data
+        Intent.ACTION_SEND -> {
+            if (intent.type?.startsWith("text/plain") != true) return null
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
+            SHARED_TEXT_URL_REGEX.find(sharedText)?.value?.let(Uri::parse)
+        }
+        else -> null
     }
 }

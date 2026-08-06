@@ -65,6 +65,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.neteinstein.compareapp.R
 import org.neteinstein.compareapp.utils.DeepLinkLocationParser
+import org.neteinstein.compareapp.utils.MapsShareLinkResolver
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +146,13 @@ fun CompareScreen(
         if (uri.toString() == lastHandledDeepLinkUri) return@LaunchedEffect
         lastHandledDeepLinkUri = uri.toString()
 
-        val location = DeepLinkLocationParser.parse(uri) ?: return@LaunchedEffect
+        val resolvedUri = if (MapsShareLinkResolver.isShortLink(uri)) {
+            MapsShareLinkResolver.resolve(uri)
+        } else {
+            uri
+        }
+
+        val location = DeepLinkLocationParser.parse(resolvedUri) ?: return@LaunchedEffect
         viewModel.applyIncomingDropoffLocation(location.latitude, location.longitude, location.label)
         Toast.makeText(context, deepLinkToastText, Toast.LENGTH_SHORT).show()
         requestOrFetchCurrentLocation()
