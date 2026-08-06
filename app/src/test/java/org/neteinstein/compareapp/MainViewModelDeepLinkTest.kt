@@ -2,6 +2,7 @@ package org.neteinstein.compareapp
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -38,6 +39,7 @@ class MainViewModelDeepLinkTest {
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         locationRepository = Mockito.mock(LocationRepository::class.java)
+        runBlocking { `when`(locationRepository.searchAddresses(Mockito.anyString())).thenReturn(emptyList()) }
         val appRepository = Mockito.mock(AppRepository::class.java)
         `when`(appRepository.checkRequiredApps()).thenReturn(Pair(true, true))
         viewModel = TestViewModelFactory.createTestViewModel(locationRepository, appRepository)
