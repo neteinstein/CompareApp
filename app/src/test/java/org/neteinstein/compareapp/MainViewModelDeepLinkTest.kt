@@ -38,6 +38,7 @@ class MainViewModelDeepLinkTest {
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         locationRepository = Mockito.mock(LocationRepository::class.java)
+        `when`(locationRepository.searchAddresses(Mockito.anyString())).thenReturn(emptyList())
         val appRepository = Mockito.mock(AppRepository::class.java)
         `when`(appRepository.checkRequiredApps()).thenReturn(Pair(true, true))
         viewModel = TestViewModelFactory.createTestViewModel(locationRepository, appRepository)
