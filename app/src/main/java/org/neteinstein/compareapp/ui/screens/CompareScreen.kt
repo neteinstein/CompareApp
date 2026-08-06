@@ -33,10 +33,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +67,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.neteinstein.compareapp.R
 import org.neteinstein.compareapp.utils.DeepLinkLocationParser
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompareScreen(
     viewModel: MainViewModel = hiltViewModel(),
@@ -72,6 +78,9 @@ fun CompareScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    var pickupMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var dropoffMenuExpanded by rememberSaveable { mutableStateOf(false) }
 
     val locationErrorText = stringResource(R.string.location_error)
     val locationPermissionDeniedText = stringResource(R.string.location_permission_denied)
@@ -201,22 +210,48 @@ fun CompareScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
-                            value = uiState.pickup,
-                            onValueChange = { viewModel.updatePickup(it) },
-                            label = { Text(stringResource(R.string.pickup_location)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.TripOrigin,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            enabled = !uiState.isLoading && !uiState.isUsingDeviceLocation && !uiState.isGettingLocation
-                        )
+                        val pickupEnabled = !uiState.isLoading && !uiState.isUsingDeviceLocation && !uiState.isGettingLocation
+                        ExposedDropdownMenuBox(
+                            expanded = pickupMenuExpanded && uiState.pickupSuggestions.isNotEmpty(),
+                            onExpandedChange = { pickupMenuExpanded = it },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            OutlinedTextField(
+                                value = uiState.pickup,
+                                onValueChange = {
+                                    viewModel.updatePickup(it)
+                                    pickupMenuExpanded = true
+                                },
+                                label = { Text(stringResource(R.string.pickup_location)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.TripOrigin,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                                singleLine = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(MenuAnchorType.PrimaryEditable, enabled = pickupEnabled),
+                                enabled = pickupEnabled
+                            )
+                            ExposedDropdownMenu(
+                                expanded = pickupMenuExpanded && uiState.pickupSuggestions.isNotEmpty(),
+                                onDismissRequest = { pickupMenuExpanded = false }
+                            ) {
+                                uiState.pickupSuggestions.forEach { suggestion ->
+                                    DropdownMenuItem(
+                                        text = { Text(suggestion.fullAddress) },
+                                        onClick = {
+                                            viewModel.selectPickupSuggestion(suggestion)
+                                            pickupMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
 
                         IconButton(
                             onClick = { requestOrFetchCurrentLocation() },
@@ -254,22 +289,47 @@ fun CompareScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    OutlinedTextField(
-                        value = uiState.dropoff,
-                        onValueChange = { viewModel.updateDropoff(it) },
-                        label = { Text(stringResource(R.string.dropoff_location)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Place,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.secondary
-                            )
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isLoading
-                    )
+                    ExposedDropdownMenuBox(
+                        expanded = dropoffMenuExpanded && uiState.dropoffSuggestions.isNotEmpty(),
+                        onExpandedChange = { dropoffMenuExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = uiState.dropoff,
+                            onValueChange = {
+                                viewModel.updateDropoff(it)
+                                dropoffMenuExpanded = true
+                            },
+                            label = { Text(stringResource(R.string.dropoff_location)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Place,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryEditable, enabled = !uiState.isLoading),
+                            enabled = !uiState.isLoading
+                        )
+                        ExposedDropdownMenu(
+                            expanded = dropoffMenuExpanded && uiState.dropoffSuggestions.isNotEmpty(),
+                            onDismissRequest = { dropoffMenuExpanded = false }
+                        ) {
+                            uiState.dropoffSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion.fullAddress) },
+                                    onClick = {
+                                        viewModel.selectDropoffSuggestion(suggestion)
+                                        dropoffMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
