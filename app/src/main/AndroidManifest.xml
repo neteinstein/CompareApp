@@ -43,6 +43,14 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="compareapp" android:host="dropoff" />
             </intent-filter>
+
+            <!-- Appear as a share target for Google Maps' "Share" button, which sends the
+                 place as ACTION_SEND text/plain (e.g. a maps.app.goo.gl link), not ACTION_VIEW. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <!-- Lets AppUpdateInstaller hand a downloaded update APK (cached under
