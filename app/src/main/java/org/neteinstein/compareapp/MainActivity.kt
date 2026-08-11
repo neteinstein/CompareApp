@@ -96,15 +96,20 @@ class MainActivity : ComponentActivity() {
                 // Small delay to ensure split screen is ready
                 kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
 
-                
                 try {
-                    // Open Bolt deep link
-                    val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
-                    boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                    boltIntent.setPackage("ee.mtakso.client")
-                    startActivity(boltIntent)
-
-                    kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
+                    // Open Bolt deep link via its custom scheme. This may fail to resolve
+                    // (app not handling that scheme/package combo, etc.) - if so, fall through
+                    // to the HTTPS link below instead of giving up, since that's still able to
+                    // open the Bolt app (or the browser) with the destination set.
+                    try {
+                        val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
+                        boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        boltIntent.setPackage("ee.mtakso.client")
+                        startActivity(boltIntent)
+                        kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
+                    } catch (e: Exception) {
+                        Log.w("MainActivity", "Bolt custom scheme intent failed, falling back to web link: ${e.message}")
+                    }
 
                     val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
                     boltIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
