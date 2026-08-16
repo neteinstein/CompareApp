@@ -96,19 +96,21 @@ class MainActivity : ComponentActivity() {
                 // Small delay to ensure split screen is ready
                 kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
 
-                
                 try {
-                    // Open Bolt deep link
-                    val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
-                    boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                    boltIntent.setPackage("ee.mtakso.client")
-                    startActivity(boltIntent)
-
-                    kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
-
-                    val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
-                    boltIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                    startActivity(boltIntentWeb)
+                    launchBoltWithFallback(
+                        startNative = {
+                            val boltIntent = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLink))
+                            boltIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                            boltIntent.setPackage("ee.mtakso.client")
+                            startActivity(boltIntent)
+                        },
+                        startWeb = {
+                            val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
+                            boltIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                            startActivity(boltIntentWeb)
+                        },
+                        delayMs = SPLIT_SCREEN_DELAY_MS
+                    )
                 } catch (e: Exception) {
                     Log.e("MainActivity", "Could not open Bolt app: ${e.message}")
                     withContext(Dispatchers.Main) {
@@ -123,6 +125,30 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+/**
+ * Drives the Bolt half of [MainActivity.openInSplitScreen]'s split-screen launch: try the native
+ * `bolt://` intent first, then always attempt the HTTPS web-link fallback afterward - a failure
+ * in [startNative] (e.g. the installed Bolt app doesn't resolve that scheme/package combination)
+ * must not skip [startWeb], since that fallback is what still gets Bolt (or a browser) open with
+ * the destination set. A failure in [startWeb] itself is NOT caught here - it propagates to the
+ * caller so the "Could not open Bolt" error path still runs.
+ * Top-level so it's unit-testable without a real Activity/Context.
+ */
+internal suspend fun launchBoltWithFallback(
+    startNative: () -> Unit,
+    startWeb: () -> Unit,
+    delayMs: Long,
+    delay: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) }
+) {
+    try {
+        startNative()
+        delay(delayMs)
+    } catch (e: Exception) {
+        Log.w("MainActivity", "Bolt custom scheme intent failed, falling back to web link: ${e.message}")
+    }
+    startWeb()
 }
 
 // The first http(s) URL found in a shared text block, e.g. Google Maps' "Share" text which

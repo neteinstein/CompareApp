@@ -1,9 +1,13 @@
 package org.neteinstein.compareapp
 
 import android.net.Uri
-import com.sun.net.httpserver.HttpServer
-import java.net.InetSocketAddress
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.PrintWriter
+import java.net.ServerSocket
+import java.net.Socket
 import java.net.URLEncoder
+import java.util.concurrent.Executors
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -18,27 +22,55 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33])
 class MapsShareLinkResolverTest {
 
-    private lateinit var server: HttpServer
+    // A hand-rolled single-connection HTTP server rather than com.sun.net.httpserver.HttpServer:
+    // that JDK-internal API isn't reliably resolvable when compiling against this project's
+    // jvmTarget/sourceCompatibility 1.8, and matches MapsShareLinkResolver's own choice to use
+    // plain java.net APIs instead of pulling in an HTTP dependency.
+    private lateinit var serverSocket: ServerSocket
     private lateinit var baseUrl: String
+
+    @Volatile
     private var receivedCookie: String? = null
     private var redirectLocation: String = ""
+    private val executor = Executors.newSingleThreadExecutor()
 
     @Before
     fun setUp() {
-        server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.createContext("/short") { exchange ->
-            receivedCookie = exchange.requestHeaders.getFirst("Cookie")
-            exchange.responseHeaders.add("Location", redirectLocation)
-            exchange.sendResponseHeaders(302, -1)
-            exchange.close()
+        serverSocket = ServerSocket(0)
+        baseUrl = "http://127.0.0.1:${serverSocket.localPort}"
+        executor.submit {
+            try {
+                serverSocket.accept().use { respondWithRedirect(it) }
+            } catch (e: Exception) {
+                // Socket closed during tearDown before a request arrived - nothing to do.
+            }
         }
-        server.start()
-        baseUrl = "http://127.0.0.1:${server.address.port}"
+    }
+
+    private fun respondWithRedirect(client: Socket) {
+        val reader = BufferedReader(InputStreamReader(client.getInputStream()))
+        var line: String?
+        while (true) {
+            line = reader.readLine() ?: break
+            if (line.isEmpty()) break
+            if (line.startsWith("Cookie:", ignoreCase = true)) {
+                receivedCookie = line.substringAfter(":").trim()
+            }
+        }
+
+        val writer = PrintWriter(client.getOutputStream(), true)
+        writer.print("HTTP/1.1 302 Found\r\n")
+        writer.print("Location: $redirectLocation\r\n")
+        writer.print("Content-Length: 0\r\n")
+        writer.print("Connection: close\r\n")
+        writer.print("\r\n")
+        writer.flush()
     }
 
     @After
     fun tearDown() {
-        server.stop(0)
+        serverSocket.close()
+        executor.shutdownNow()
     }
 
     @Test
