@@ -23,6 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.neteinstein.compareapp.ui.screens.BoltLinkLabRoute
 import org.neteinstein.compareapp.ui.screens.CompareScreen
 import org.neteinstein.compareapp.ui.screens.SettingsRoute
 import org.neteinstein.compareapp.ui.theme.CompareAppTheme
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
     // No Navigation-Compose in this app: opening Settings (the top-right button on the main
     // screen) is just a local flag flipped back by Settings' own back arrow or the system back
     // gesture/button (see BackHandler below).
-    private enum class Screen { MAIN, SETTINGS }
+    private enum class Screen { MAIN, SETTINGS, BOLT_LINK_LAB }
 
     // Holds the data URI of a location deep link (e.g. "geo:..." shared from Maps).
     // Re-parsed on each onCreate/onNewIntent; the screen tracks which one it already consumed.
@@ -59,10 +60,16 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     var screen by rememberSaveable { mutableStateOf(Screen.MAIN) }
-                    BackHandler(enabled = screen != Screen.MAIN) { screen = Screen.MAIN }
+                    BackHandler(enabled = screen != Screen.MAIN) {
+                        screen = if (screen == Screen.BOLT_LINK_LAB) Screen.SETTINGS else Screen.MAIN
+                    }
 
                     when (screen) {
-                        Screen.SETTINGS -> SettingsRoute(onBack = { screen = Screen.MAIN })
+                        Screen.SETTINGS -> SettingsRoute(
+                            onBack = { screen = Screen.MAIN },
+                            onOpenBoltLinkLab = { screen = Screen.BOLT_LINK_LAB }
+                        )
+                        Screen.BOLT_LINK_LAB -> BoltLinkLabRoute(onBack = { screen = Screen.SETTINGS })
                         Screen.MAIN -> {
                             val locationUri by incomingLocationUri
                             CompareScreen(
