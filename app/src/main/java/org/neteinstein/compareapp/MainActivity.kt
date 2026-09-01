@@ -1,5 +1,6 @@
 package org.neteinstein.compareapp
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -105,9 +106,19 @@ class MainActivity : ComponentActivity() {
                             startActivity(boltIntent)
                         },
                         startWeb = {
-                            val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
-                            boltIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                            startActivity(boltIntentWeb)
+                            openBoltWebLink(
+                                startWebApp = {
+                                    val boltIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
+                                    boltIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                                    boltIntentWeb.setPackage("ee.mtakso.client")
+                                    startActivity(boltIntentWeb)
+                                },
+                                startWebBrowser = {
+                                    val browserIntentWeb = Intent(Intent.ACTION_VIEW, Uri.parse(boltDeepLinkWeb))
+                                    browserIntentWeb.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                                    startActivity(browserIntentWeb)
+                                }
+                            )
                         },
                         delayMs = SPLIT_SCREEN_DELAY_MS
                     )
@@ -149,6 +160,27 @@ internal suspend fun launchBoltWithFallback(
         Log.w("MainActivity", "Bolt custom scheme intent failed, falling back to web link: ${e.message}")
     }
     startWeb()
+}
+
+/**
+ * Opens the Bolt HTTPS web link fired by [launchBoltWithFallback]'s `startWeb` step - the one
+ * that actually sets the ride's pickup/destination. Android only auto-routes an `https://` URL
+ * straight into an installed app when that app's App Link domain is verified, which is
+ * unreliable in practice and otherwise silently opens a browser tab that can't complete the
+ * booking flow. [startWebApp] should target the Bolt package explicitly so the link resolves
+ * directly to Bolt whenever it declares a matching intent filter, regardless of verification;
+ * [startWebBrowser] is only reached when that explicit-package intent doesn't resolve at all
+ * (Bolt not installed, or doesn't declare that link), falling back to whatever generically
+ * handles the URL (Bolt via verified App Links, or a browser).
+ * Top-level so it's unit-testable without a real Activity/Context.
+ */
+internal fun openBoltWebLink(startWebApp: () -> Unit, startWebBrowser: () -> Unit) {
+    try {
+        startWebApp()
+    } catch (e: ActivityNotFoundException) {
+        Log.w("MainActivity", "Bolt app doesn't handle its web link, falling back to browser: ${e.message}")
+        startWebBrowser()
+    }
 }
 
 // The first http(s) URL found in a shared text block, e.g. Google Maps' "Share" text which
