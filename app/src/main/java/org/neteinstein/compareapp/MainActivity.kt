@@ -9,8 +9,14 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +41,12 @@ class MainActivity : ComponentActivity() {
     companion object {
         // Delay to ensure split screen mode is ready before launching second app
         private const val SPLIT_SCREEN_DELAY_MS = 500L
+
+        // How long the "swipe to choose" split-screen hint stays visible
+        private const val SPLIT_SCREEN_HINT_DURATION_MS = 3000L
     }
+
+    private val snackbarHostState = SnackbarHostState()
 
     // No Navigation-Compose in this app: opening Settings (the top-right button on the main
     // screen) is just a local flag flipped back by Settings' own back arrow or the system back
@@ -56,31 +67,42 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CompareAppTheme {
-                Surface(
+                Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                    containerColor = MaterialTheme.colorScheme.background,
+                    // Screens handle their own edge-to-edge insets (e.g. CompareScreen's own
+                    // statusBarsPadding()); don't let Scaffold apply them a second time.
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                ) { innerPadding ->
                     var screen by rememberSaveable { mutableStateOf(Screen.MAIN) }
                     BackHandler(enabled = screen != Screen.MAIN) {
                         screen = if (screen == Screen.BOLT_LINK_LAB) Screen.SETTINGS else Screen.MAIN
                     }
 
-                    when (screen) {
-                        Screen.SETTINGS -> SettingsRoute(
-                            onBack = { screen = Screen.MAIN },
-                            onOpenBoltLinkLab = { screen = Screen.BOLT_LINK_LAB }
-                        )
-                        Screen.BOLT_LINK_LAB -> BoltLinkLabRoute(onBack = { screen = Screen.SETTINGS })
-                        Screen.MAIN -> {
-                            val locationUri by incomingLocationUri
-                            CompareScreen(
-                                incomingLocationUri = locationUri,
-                                onOpenSettings = { screen = Screen.SETTINGS },
-                                onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
-                                    openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
-                                },
-                                onOpenFoodSearch = { links -> openFoodSearch(links) }
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        when (screen) {
+                            Screen.SETTINGS -> SettingsRoute(
+                                onBack = { screen = Screen.MAIN },
+                                onOpenBoltLinkLab = { screen = Screen.BOLT_LINK_LAB }
                             )
+                            Screen.BOLT_LINK_LAB -> BoltLinkLabRoute(onBack = { screen = Screen.SETTINGS })
+                            Screen.MAIN -> {
+                                val locationUri by incomingLocationUri
+                                CompareScreen(
+                                    incomingLocationUri = locationUri,
+                                    onOpenSettings = { screen = Screen.SETTINGS },
+                                    onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
+                                        openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
+                                    },
+                                    onOpenFoodSearch = { links -> openFoodSearch(links) }
+                                )
+                            }
                         }
                     }
                 }
@@ -94,7 +116,25 @@ class MainActivity : ComponentActivity() {
         incomingLocationUri.value = locationUriFromIntent(intent)
     }
 
+    /**
+     * Shows the "swipe middle up or down to choose" hint and auto-dismisses it after
+     * [SPLIT_SCREEN_HINT_DURATION_MS] instead of relying on [SnackbarDuration]'s fixed presets.
+     */
+    private fun showSplitScreenHint() {
+        lifecycleScope.launch {
+            snackbarHostState.showSnackbar(
+                message = getString(R.string.split_screen_hint),
+                duration = SnackbarDuration.Indefinite
+            )
+        }
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(SPLIT_SCREEN_HINT_DURATION_MS)
+            snackbarHostState.currentSnackbarData?.dismiss()
+        }
+    }
+
     private fun openInSplitScreen(uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) {
+        showSplitScreenHint()
         lifecycleScope.launch {
             try {
                 // Open Uber deep link
@@ -153,6 +193,7 @@ class MainActivity : ComponentActivity() {
      * [FoodDeliveryProvider]'s declaration order (see [MainViewModel.prepareFoodSearchLinks]).
      */
     private fun openFoodSearch(links: Map<FoodDeliveryProvider, String>) {
+        showSplitScreenHint()
         lifecycleScope.launch {
             links.entries.forEachIndexed { index, (provider, link) ->
                 if (index > 0) {

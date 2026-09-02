@@ -16,7 +16,8 @@
     <string name="location_error">Não foi possível obter a localização atual</string>
     <string name="getting_location">Obtendo localização…</string>
     <string name="deep_link_dropoff_set">Destino definido a partir do local partilhado</string>
-    <string name="info_label">Este aplicativo é usado para comparar preços entre Uber e Bolt. Escolha os locais de recolha e entrega e ambos os aplicativos abrirão em tela dividida já com o destino e custo definidos. Então é só deslizar para tela cheia o mais barato!</string>
+    <string name="info_label">Este aplicativo é usado para comparar preços entre 2 fornecedores de cada serviço ao mesmo tempo. Verifique as Configurações para definir quais são usados</string>
+    <string name="split_screen_hint">Deslize o meio para cima ou para baixo para escolher o que você quer</string>
 
     <string name="settings_cd">Configurações</string>
     <string name="settings_title">Configurações</string>
@@ -46,8 +47,7 @@
     <string name="food_search_mode_dish">Prato</string>
     <string name="food_search_query_restaurant_label">Nome do restaurante</string>
     <string name="food_search_query_dish_label">Comida ou prato</string>
-    <string name="food_search_location_label">Local (cidade, bairro)</string>
     <string name="food_search_button">Pesquisar Comida</string>
     <string name="food_search_validation_message">Por favor, insira um restaurante ou prato para pesquisar</string>
-    <string name="food_search_disclaimer">Nenhum destes aplicativos de entrega de comida publica um formato de link direto para pesquisa, então isso é uma tentativa - os aplicativos abrirão, mas a pesquisa pode não ser preenchida automaticamente.</string>
+    <string name="food_search_disclaimer">O deep linking dos aplicativos não é oficialmente suportado. A pesquisa pode não ser acionada automaticamente</string>
 </resources>

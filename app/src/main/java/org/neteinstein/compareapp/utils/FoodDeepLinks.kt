@@ -30,18 +30,12 @@ enum class FoodSearchMode {
  */
 object FoodDeepLinks {
 
-    fun createSearchLink(provider: FoodDeliveryProvider, query: String, location: String): String {
-        val encoded = URLEncoder.encode(combinedQuery(query, location), "UTF-8")
+    fun createSearchLink(provider: FoodDeliveryProvider, query: String): String {
+        val encoded = URLEncoder.encode(query.trim(), "UTF-8")
         return when (provider) {
             FoodDeliveryProvider.UBER_EATS -> "https://www.ubereats.com/search?q=$encoded"
             FoodDeliveryProvider.BOLT_FOOD -> "https://food.bolt.eu/search?q=$encoded"
             FoodDeliveryProvider.GLOVO -> "https://glovoapp.com/search/?query=$encoded"
         }
-    }
-
-    private fun combinedQuery(query: String, location: String): String {
-        val trimmedQuery = query.trim()
-        val trimmedLocation = location.trim()
-        return if (trimmedLocation.isEmpty()) trimmedQuery else "$trimmedQuery $trimmedLocation"
     }
 }
