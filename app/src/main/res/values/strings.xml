@@ -6,12 +6,11 @@
     <string name="dropoff_location">Dropoff Location</string>
     <string name="validation_message">Please enter both pickup and dropoff locations</string>
     <string name="loading">Loading…</string>
-    <string name="compare">Compare</string>
+    <string name="compare">Compare Trips</string>
     <string name="error_bolt">Could not open Bolt app</string>
     <string name="error_uber">Could not open Uber app</string>
     <string name="error_prepare_deeplinks">Could not prepare location data. Please check your addresses.</string>
-    <string name="error_uber_eats">Could not open Uber Eats app</string>
-    <string name="error_bolt_food">Could not open Bolt Food app</string>
+    <string name="error_food_provider">Could not open %1$s</string>
     <string name="use_current_location">Use current location</string>
     <string name="location_permission_denied">Location permission denied</string>
     <string name="location_error">Could not get current location</string>
@@ -26,6 +25,10 @@
     <string name="settings_language_section_title">Language</string>
     <string name="settings_language_info">Change the language this app is displayed in from your device\'s Settings.</string>
     <string name="settings_language_button">Change language</string>
+
+    <string name="settings_comparison_section_title">Comparison configuration</string>
+    <string name="settings_comparison_food_subtitle">Food</string>
+    <string name="settings_comparison_food_info">Pick exactly 2 apps to compare on "Search Food". Tapping a third app swaps out whichever of the current 2 was picked longest ago.</string>
 
     <string name="settings_update_section_title">Updates</string>
     <string name="settings_update_info">Checks this app\'s GitHub releases page for a newer version and downloads it from there - no Play Store needed.</string>
@@ -46,5 +49,5 @@
     <string name="food_search_location_label">Location (city, area)</string>
     <string name="food_search_button">Search Food</string>
     <string name="food_search_validation_message">Please enter a restaurant or dish to search for</string>
-    <string name="food_search_disclaimer">Neither Uber Eats nor Bolt Food publish a search deep-link format, so this is a best-effort guess - both apps will open, but the search may not pre-fill.</string>
+    <string name="food_search_disclaimer">None of these food delivery apps publish a search deep-link format, so this is a best-effort guess - both apps will open, but the search may not pre-fill.</string>
 </resources>

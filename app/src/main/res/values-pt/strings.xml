@@ -6,12 +6,11 @@
     <string name="dropoff_location">Local de Entrega</string>
     <string name="validation_message">Por favor, insira os locais de recolha e entrega</string>
     <string name="loading">Carregando…</string>
-    <string name="compare">Comparar</string>
+    <string name="compare">Comparar Viagens</string>
     <string name="error_bolt">Não foi possível abrir o aplicativo Bolt</string>
     <string name="error_uber">Não foi possível abrir o aplicativo Uber</string>
     <string name="error_prepare_deeplinks">Não foi possível preparar os dados de localização. Verifique os endereços.</string>
-    <string name="error_uber_eats">Não foi possível abrir o aplicativo Uber Eats</string>
-    <string name="error_bolt_food">Não foi possível abrir o aplicativo Bolt Food</string>
+    <string name="error_food_provider">Não foi possível abrir o %1$s</string>
     <string name="use_current_location">Usar localização atual</string>
     <string name="location_permission_denied">Permissão de localização negada</string>
     <string name="location_error">Não foi possível obter a localização atual</string>
@@ -26,6 +25,10 @@
     <string name="settings_language_section_title">Idioma</string>
     <string name="settings_language_info">Altere o idioma de exibição deste aplicativo nas configurações do seu dispositivo.</string>
     <string name="settings_language_button">Alterar idioma</string>
+
+    <string name="settings_comparison_section_title">Configuração de comparação</string>
+    <string name="settings_comparison_food_subtitle">Comida</string>
+    <string name="settings_comparison_food_info">Escolha exatamente 2 aplicativos para comparar em "Pesquisar Comida". Tocar num terceiro aplicativo substitui o que foi escolhido há mais tempo entre os 2 atuais.</string>
 
     <string name="settings_update_section_title">Atualizações</string>
     <string name="settings_update_info">Verifica a página de releases deste aplicativo no GitHub em busca de uma versão mais recente e a baixa de lá - sem precisar da Play Store.</string>
@@ -46,5 +49,5 @@
     <string name="food_search_location_label">Local (cidade, bairro)</string>
     <string name="food_search_button">Pesquisar Comida</string>
     <string name="food_search_validation_message">Por favor, insira um restaurante ou prato para pesquisar</string>
-    <string name="food_search_disclaimer">Nem o Uber Eats nem o Bolt Food publicam um formato de link direto para pesquisa, então isso é uma tentativa - ambos os aplicativos abrirão, mas a pesquisa pode não ser preenchida automaticamente.</string>
+    <string name="food_search_disclaimer">Nenhum destes aplicativos de entrega de comida publica um formato de link direto para pesquisa, então isso é uma tentativa - os aplicativos abrirão, mas a pesquisa pode não ser preenchida automaticamente.</string>
 </resources>

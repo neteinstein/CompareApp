@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.neteinstein.compareapp.R
+import org.neteinstein.compareapp.utils.FoodDeliveryProvider
 
 /**
  * Stateful entry point: wires [SettingsViewModel] to [SettingsScreen].
@@ -78,9 +81,11 @@ fun SettingsRoute(
     SettingsScreen(
         uiState = uiState,
         onBack = onBack,
+        onTitleClicked = viewModel::onTitleClicked,
         onUpdateClicked = viewModel::onUpdateClicked,
         onEnableSideloadingClicked = viewModel::onEnableSideloadingClicked,
         onChangeLanguageClicked = onChangeLanguageClicked,
+        onFoodProviderToggled = viewModel::onFoodProviderToggled,
         onOpenBoltLinkLab = onOpenBoltLinkLab,
         modifier = modifier
     )
@@ -88,8 +93,10 @@ fun SettingsRoute(
 
 /**
  * Stateless, preview-friendly screen: title bar up top, a scrollable body ordered
- * Language -> Updates. Language is omitted entirely when [onChangeLanguageClicked] is `null`
- * (below API 33 - see [SettingsRoute]).
+ * Language -> Comparison configuration -> Updates -> (hidden) Diagnostics. Language is omitted
+ * entirely when [onChangeLanguageClicked] is `null` (below API 33 - see [SettingsRoute]).
+ * Diagnostics only appears once [uiState].diagnosticsUnlocked is true, which [onTitleClicked]
+ * (wired to the title text below) works towards - see [SettingsViewModel.onTitleClicked].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,16 +104,23 @@ fun SettingsScreen(
     uiState: SettingsUiState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onTitleClicked: () -> Unit = {},
     onUpdateClicked: () -> Unit = {},
     onEnableSideloadingClicked: () -> Unit = {},
     onChangeLanguageClicked: (() -> Unit)? = null,
+    onFoodProviderToggled: (FoodDeliveryProvider) -> Unit = {},
     onOpenBoltLinkLab: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.settings_title)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.settings_title),
+                        modifier = Modifier.clickable(onClick = onTitleClicked)
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -136,6 +150,17 @@ fun SettingsScreen(
             }
 
             Text(
+                text = stringResource(R.string.settings_comparison_section_title),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            ComparisonConfigurationSection(
+                selectedFoodProviders = uiState.selectedFoodProviders,
+                onFoodProviderToggled = onFoodProviderToggled
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
                 text = stringResource(R.string.settings_update_section_title),
                 style = MaterialTheme.typography.titleMedium
             )
@@ -146,21 +171,59 @@ fun SettingsScreen(
                 onEnableSideloadingClicked = onEnableSideloadingClicked
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Diagnostics",
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Column(modifier = Modifier.fillMaxWidth()) {
+            if (uiState.diagnosticsUnlocked) {
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Try out candidate Bolt deep-link formats against the installed Bolt app.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    text = "Diagnostics",
+                    style = MaterialTheme.typography.titleMedium
                 )
-                TextButton(onClick = onOpenBoltLinkLab) {
-                    Text(text = "Open Bolt Link Lab")
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Try out candidate Bolt deep-link formats against the installed Bolt app.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    TextButton(onClick = onOpenBoltLinkLab) {
+                        Text(text = "Open Bolt Link Lab")
+                    }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Which pair of food delivery apps "Search Food" compares - see
+ * [SettingsViewModel.onFoodProviderToggled] for the exactly-2 swap behavior each checkbox drives.
+ */
+@Composable
+private fun ComparisonConfigurationSection(
+    selectedFoodProviders: List<FoodDeliveryProvider>,
+    onFoodProviderToggled: (FoodDeliveryProvider) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.settings_comparison_food_subtitle),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(R.string.settings_comparison_food_info),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+        )
+        FoodDeliveryProvider.entries.forEach { provider ->
+            val isSelected = provider in selectedFoodProviders
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onFoodProviderToggled(provider) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(checked = isSelected, onCheckedChange = { onFoodProviderToggled(provider) })
+                Text(text = provider.displayName, style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

@@ -16,16 +16,18 @@ import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
+import org.neteinstein.compareapp.helpers.FakeComparisonConfigRepository
 import org.neteinstein.compareapp.helpers.TestViewModelFactory
 import org.neteinstein.compareapp.ui.screens.MainViewModel
+import org.neteinstein.compareapp.utils.FoodDeliveryProvider
 import org.neteinstein.compareapp.utils.FoodSearchMode
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for the food search (Uber Eats / Bolt Food) side of [MainViewModel] - the query/location
- * fields, restaurant-vs-dish mode toggle, and building the two search links. Unlike
- * [MainViewModel.prepareDeepLinks], this never geocodes - both links take free-text search terms.
+ * Tests for the food search side of [MainViewModel] - the query/location fields, restaurant-vs-dish
+ * mode toggle, and building search links for the currently selected pair of food providers. Unlike
+ * [MainViewModel.prepareDeepLinks], this never geocodes - all these links take free-text search terms.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
@@ -79,7 +81,7 @@ class MainViewModelFoodSearchTest {
         var errorCalled = false
         var successCalled = false
         viewModel.prepareFoodSearchLinks(
-            onSuccess = { _, _ -> successCalled = true },
+            onSuccess = { successCalled = true },
             onError = { errorCalled = true }
         )
 
@@ -88,19 +90,16 @@ class MainViewModelFoodSearchTest {
     }
 
     @Test
-    fun testPrepareFoodSearchLinks_buildsBothLinksFromQueryAndLocation() {
+    fun testPrepareFoodSearchLinks_buildsLinksForBothSelectedProviders() {
         viewModel.updateFoodQuery("Tacos")
         viewModel.updateFoodLocation("Madrid")
 
-        var uberEatsLink: String? = null
-        var boltFoodLink: String? = null
-        viewModel.prepareFoodSearchLinks(
-            onSuccess = { uber, bolt ->
-                uberEatsLink = uber
-                boltFoodLink = bolt
-            }
-        )
+        var links: Map<FoodDeliveryProvider, String>? = null
+        viewModel.prepareFoodSearchLinks(onSuccess = { links = it })
 
+        val uberEatsLink = links?.get(FoodDeliveryProvider.UBER_EATS)
+        val boltFoodLink = links?.get(FoodDeliveryProvider.BOLT_FOOD)
+        assertEquals(2, links?.size)
         assertTrue(uberEatsLink?.startsWith("https://www.ubereats.com/search?q=") == true)
         assertTrue(uberEatsLink?.contains("Tacos+Madrid") == true)
         assertTrue(boltFoodLink?.startsWith("https://food.bolt.eu/search?q=") == true)
@@ -108,10 +107,31 @@ class MainViewModelFoodSearchTest {
     }
 
     @Test
-    fun testCheckFoodAppsInstalled_updatesInstalledFlags() {
+    fun testPrepareFoodSearchLinks_respectsSelectedProviders() {
         val appRepository = Mockito.mock(AppRepository::class.java)
         `when`(appRepository.checkRequiredApps()).thenReturn(Pair(true, true))
-        `when`(appRepository.checkFoodApps()).thenReturn(Pair(false, true))
+        val configRepository = FakeComparisonConfigRepository(
+            initial = setOf(FoodDeliveryProvider.BOLT_FOOD, FoodDeliveryProvider.GLOVO)
+        )
+        val vm = TestViewModelFactory.createTestViewModel(
+            Mockito.mock(LocationRepository::class.java),
+            appRepository,
+            configRepository
+        )
+        vm.updateFoodQuery("Sushi")
+
+        var links: Map<FoodDeliveryProvider, String>? = null
+        vm.prepareFoodSearchLinks(onSuccess = { links = it })
+
+        assertEquals(setOf(FoodDeliveryProvider.BOLT_FOOD, FoodDeliveryProvider.GLOVO), links?.keys)
+    }
+
+    @Test
+    fun testCheckFoodAppsInstalled_updatesInstalledProviders() {
+        val appRepository = Mockito.mock(AppRepository::class.java)
+        `when`(appRepository.checkRequiredApps()).thenReturn(Pair(true, true))
+        `when`(appRepository.isAppInstalled(FoodDeliveryProvider.UBER_EATS.packageName)).thenReturn(false)
+        `when`(appRepository.isAppInstalled(FoodDeliveryProvider.BOLT_FOOD.packageName)).thenReturn(true)
         val vm = TestViewModelFactory.createTestViewModel(
             Mockito.mock(LocationRepository::class.java),
             appRepository
@@ -120,7 +140,7 @@ class MainViewModelFoodSearchTest {
         vm.checkFoodAppsInstalled()
 
         val state = vm.uiState.value
-        assertFalse(state.isUberEatsInstalled)
-        assertTrue(state.isBoltFoodInstalled)
+        assertFalse(FoodDeliveryProvider.UBER_EATS in state.installedFoodProviders)
+        assertTrue(FoodDeliveryProvider.BOLT_FOOD in state.installedFoodProviders)
     }
 }

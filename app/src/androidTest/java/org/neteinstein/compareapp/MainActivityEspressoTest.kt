@@ -37,7 +37,7 @@ class MainActivityEspressoTest {
     @Test
     fun testCompareButtonIsDisplayedButDisabled_whenAppsNotInstalled() {
         // The compare button should be visible but disabled if apps aren't installed
-        val compareButton = composeTestRule.onNodeWithText("Compare")
+        val compareButton = composeTestRule.onNodeWithText("Compare Trips")
         compareButton.assertIsDisplayed()
         // Note: This may fail if Uber/Bolt are actually installed on test device
     }
@@ -129,6 +129,6 @@ class MainActivityEspressoTest {
         composeTestRule.onNodeWithText("CompareApp").assertIsDisplayed()
         composeTestRule.onNodeWithText("Pickup Location").assertIsDisplayed()
         composeTestRule.onNodeWithText("Dropoff Location").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Compare").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Compare Trips").assertIsDisplayed()
     }
 }
