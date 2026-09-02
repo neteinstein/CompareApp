@@ -25,8 +25,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for the food search side of [MainViewModel] - the query/location fields, restaurant-vs-dish
- * mode toggle, and building search links for the currently selected pair of food providers. Unlike
+ * Tests for the food search side of [MainViewModel] - the query field, restaurant-vs-dish mode
+ * toggle, and building search links for the currently selected pair of food providers. Unlike
  * [MainViewModel.prepareDeepLinks], this never geocodes - all these links take free-text search terms.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -65,13 +65,11 @@ class MainViewModelFoodSearchTest {
     }
 
     @Test
-    fun testUpdateFoodQueryAndLocation_updateState() {
+    fun testUpdateFoodQuery_updateState() {
         viewModel.updateFoodQuery("Ramen")
-        viewModel.updateFoodLocation("Porto")
 
         val state = viewModel.uiState.value
         assertEquals("Ramen", state.foodQuery)
-        assertEquals("Porto", state.foodLocation)
     }
 
     @Test
@@ -92,7 +90,6 @@ class MainViewModelFoodSearchTest {
     @Test
     fun testPrepareFoodSearchLinks_buildsLinksForBothSelectedProviders() {
         viewModel.updateFoodQuery("Tacos")
-        viewModel.updateFoodLocation("Madrid")
 
         var links: Map<FoodDeliveryProvider, String>? = null
         viewModel.prepareFoodSearchLinks(onSuccess = { links = it })
@@ -100,10 +97,8 @@ class MainViewModelFoodSearchTest {
         val uberEatsLink = links?.get(FoodDeliveryProvider.UBER_EATS)
         val boltFoodLink = links?.get(FoodDeliveryProvider.BOLT_FOOD)
         assertEquals(2, links?.size)
-        assertTrue(uberEatsLink?.startsWith("https://www.ubereats.com/search?q=") == true)
-        assertTrue(uberEatsLink?.contains("Tacos+Madrid") == true)
-        assertTrue(boltFoodLink?.startsWith("https://food.bolt.eu/search?q=") == true)
-        assertTrue(boltFoodLink?.contains("Tacos+Madrid") == true)
+        assertEquals("https://www.ubereats.com/search?q=Tacos", uberEatsLink)
+        assertEquals("https://food.bolt.eu/search?q=Tacos", boltFoodLink)
     }
 
     @Test

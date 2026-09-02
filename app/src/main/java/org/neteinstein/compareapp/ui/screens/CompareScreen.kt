@@ -475,24 +475,6 @@ fun CompareScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    OutlinedTextField(
-                        value = uiState.foodLocation,
-                        onValueChange = viewModel::updateFoodLocation,
-                        label = { Text(stringResource(R.string.food_search_location_label)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Place,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.secondary
-                            )
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Button(

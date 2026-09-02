@@ -335,21 +335,18 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(foodQuery = value) }
     }
 
-    fun updateFoodLocation(value: String) {
-        _uiState.update { it.copy(foodLocation = value) }
-    }
-
     fun setFoodSearchMode(mode: FoodSearchMode) {
         _uiState.update { it.copy(foodSearchMode = mode) }
     }
 
     /**
      * Builds the search links for the currently selected pair of food providers (Settings >
-     * Comparison configuration) from the current query + location - see [FoodDeepLinks] for why
-     * these are unverified best-effort guesses rather than a confirmed format. No geocoding needed
-     * here (unlike [prepareDeepLinks]): all these links take free-text search terms, not
-     * coordinates. Ordered by [FoodDeliveryProvider]'s declaration order so which app opens first
-     * is stable regardless of the order the pair was selected in.
+     * Comparison configuration) from the current query - see [FoodDeepLinks] for why these are
+     * unverified best-effort guesses rather than a confirmed format. No geocoding needed here
+     * (unlike [prepareDeepLinks]): all these links take free-text search terms, not coordinates.
+     * No location is sent either - the food apps already know it from being logged in on-device.
+     * Ordered by [FoodDeliveryProvider]'s declaration order so which app opens first is stable
+     * regardless of the order the pair was selected in.
      */
     fun prepareFoodSearchLinks(
         onSuccess: (links: Map<FoodDeliveryProvider, String>) -> Unit,
@@ -363,7 +360,7 @@ class MainViewModel @Inject constructor(
 
         val links = FoodDeliveryProvider.entries
             .filter { it in currentState.selectedFoodProviders }
-            .associateWith { FoodDeepLinks.createSearchLink(it, currentState.foodQuery, currentState.foodLocation) }
+            .associateWith { FoodDeepLinks.createSearchLink(it, currentState.foodQuery) }
         onSuccess(links)
     }
 
@@ -386,7 +383,6 @@ data class CompareUiState(
     val pickupSuggestions: List<AddressSuggestion> = emptyList(),
     val dropoffSuggestions: List<AddressSuggestion> = emptyList(),
     val foodQuery: String = "",
-    val foodLocation: String = "",
     val foodSearchMode: FoodSearchMode = FoodSearchMode.RESTAURANT,
     val selectedFoodProviders: Set<FoodDeliveryProvider> = emptySet(),
     val installedFoodProviders: Set<FoodDeliveryProvider> = emptySet()

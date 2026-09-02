@@ -16,7 +16,8 @@
     <string name="location_error">Could not get current location</string>
     <string name="getting_location">Getting location…</string>
     <string name="deep_link_dropoff_set">Destination set from shared location</string>
-    <string name="info_label">This app is used to compare prices between Uber and Bolt. Choose the pickup and dropoff locations and both app will open in split screen already with the destination and cost set. Then it\'s just swiping to full screen the cheapest!</string>
+    <string name="info_label">This app is used to compare prices between 2 provides of each service at the same time. Please check Settings to configure which are used</string>
+    <string name="split_screen_hint">Swipe middle up or down to choose the one you want</string>
 
     <string name="settings_cd">Settings</string>
     <string name="settings_title">Settings</string>
@@ -46,8 +47,7 @@
     <string name="food_search_mode_dish">Dish</string>
     <string name="food_search_query_restaurant_label">Restaurant name</string>
     <string name="food_search_query_dish_label">Food or dish</string>
-    <string name="food_search_location_label">Location (city, area)</string>
     <string name="food_search_button">Search Food</string>
     <string name="food_search_validation_message">Please enter a restaurant or dish to search for</string>
-    <string name="food_search_disclaimer">None of these food delivery apps publish a search deep-link format, so this is a best-effort guess - both apps will open, but the search may not pre-fill.</string>
+    <string name="food_search_disclaimer">App deep linking is not officially supported. Search might not be triggered automatically</string>
 </resources>

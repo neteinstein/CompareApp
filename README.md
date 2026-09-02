@@ -1,17 +1,19 @@
 # CompareApp
 
-An Android app that allows users to compare ride-sharing services (Uber and Bolt) side-by-side in split screen mode.
+An Android app that lets users compare 2 providers of a service at a time - ride-sharing (Uber and Bolt) or food delivery (pick any 2 of Uber Eats, Bolt Food, and Glovo) - side-by-side in split screen mode.
 
 ## Overview
 
-CompareApp simplifies the process of comparing ride prices between Uber and Bolt by automatically opening both apps side-by-side with your pickup and dropoff locations pre-filled. This allows you to make quick, informed decisions about which service offers the best value for your journey.
+CompareApp simplifies comparing prices between two apps at once by opening both side-by-side in split screen with your search already filled in - locations for rides, or a restaurant/dish for food delivery. A snackbar reminds you to swipe the middle divider up or down to pick the cheaper one. Which food delivery apps are compared is configurable from Settings.
 
 ## Features
 
 - **Modern UI**: Built with Jetpack Compose and Material3 design system
-- **Split Screen Mode**: Automatically opens Uber and Bolt apps side-by-side
+- **Split Screen Mode**: Automatically opens two apps side-by-side, with a hint on how to swipe to the one you want
+- **Ride Comparison**: Compares Uber and Bolt for a given pickup/dropoff
+- **Food Delivery Comparison**: Compares any 2 of Uber Eats, Bolt Food, and Glovo for a restaurant or dish search, configurable from Settings
 - **Smart Geocoding**: Converts text addresses to coordinates for accurate location matching
-- **Deep Linking**: Seamlessly integrates with Uber and Bolt apps using their deep link APIs
+- **Deep Linking**: Seamlessly integrates with each provider's app using their deep link APIs
 - **Incoming Location Links**: Share a location from Maps ("Open with" a `geo:` link) to prepopulate the dropoff field, using your current location as pickup
 - **Location Services**: Supports current location detection with Google Play Services
 - **Offline Fallback**: Gracefully handles geocoding failures with text-based fallbacks
@@ -22,8 +24,8 @@ CompareApp simplifies the process of comparing ride prices between Uber and Bolt
 ### Prerequisites
 
 - Android device or emulator running Android 7.0 (API 24) or higher
-- Uber app installed (for Uber comparison)
-- Bolt app installed (for Bolt comparison)
+- Uber and Bolt apps installed (for ride comparison)
+- 2 of Uber Eats, Bolt Food, and Glovo installed (for food delivery comparison)
 - Android Studio Hedgehog (2023.1.1) or later (for development)
 
 ### Installation
@@ -45,12 +47,19 @@ CompareApp simplifies the process of comparing ride prices between Uber and Bolt
 
 ### How to Use
 
+**Rides:**
 1. Launch the CompareApp
 2. Enter your **pickup location** (e.g., "Times Square, New York")
 3. Enter your **dropoff location** (e.g., "Central Park, New York")
 4. Tap the **Compare** button
 5. Both Uber and Bolt apps will open in split screen mode with your locations pre-filled
-6. Compare prices and features to choose the best option
+6. Swipe the middle divider up or down to bring the cheaper one to full screen
+
+**Food delivery:**
+1. Enter a restaurant name or a dish to search for
+2. Tap **Search Food**
+3. Your 2 selected food delivery apps (configurable under Settings > Comparison configuration) open in split screen with the search pre-filled where supported
+4. Swipe the middle divider up or down to bring the cheaper one to full screen
 
 ## High-Level Architecture
 
@@ -154,8 +163,8 @@ For signed releases and Play Store deployment, see [docs/DEPLOYMENT.md](docs/DEP
 
 - Android device with API 24+ (Android 7.0 or higher)
 - Split screen support (available on Android 7.0+)
-- Uber app installed from Play Store
-- Bolt app installed from Play Store
+- Uber and Bolt apps installed from Play Store (for ride comparison)
+- The 2 food delivery apps selected in Settings installed from Play Store (for food delivery comparison)
 - Internet connection (for geocoding)
 - Location permissions (for current location feature)
 
