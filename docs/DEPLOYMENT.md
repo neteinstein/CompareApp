@@ -437,8 +437,8 @@ PLAY_STORE_SERVICE_ACCOUNT_JSON   Updated now by you
 #### Step 1: Build Signed APK Locally
 
 ```bash
-# Set environment variables
-export KEYSTORE_FILE="/path/to/release.keystore"
+# Set environment variables (KEYSTORE_FILE is the base64-encoded keystore, not a path)
+export KEYSTORE_FILE=$(base64 release.keystore | tr -d '\n')
 export KEYSTORE_PASSWORD="your_password"
 export KEY_ALIAS="compareapp"
 export KEY_PASSWORD="your_key_password"
