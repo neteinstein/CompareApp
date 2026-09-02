@@ -189,38 +189,61 @@ still unconfirmed on-device.
 
 ---
 
-## 5. Glovo — `com.glovo` — ❓ UNVERIFIED GUESS
+## 5. Glovo — `com.glovo` — 🔎 VERIFIED HOST (likely), ❓ path/query params still guessed
 
-**Source**: no official documentation found (same situation as Uber Eats). No shipped
-`AndroidManifest.xml` was available to inspect for this one either (unlike Bolt/Bolt Food, where a
-real manifest was shared during those tasks) - both the network fetches attempted while researching
-this and a manifest teardown were unavailable in that session's environment, so *nothing* below the
-package name is host/param-verified. This is the least-confident entry in this document; treat it
-as a starting point for on-device testing, not a trustworthy format.
+**Source**: the app's own shipped `AndroidManifest.xml` (`versionName="2026.36.0"`,
+`versionCode="412660"`), shared during this task. No official Glovo developer documentation exists
+for the consumer app.
 
-**Package name**: `com.glovo` (confirmed via web search against the Play Store listing for "Glovo:
-Food & Grocery Delivery" - note this is distinct from the separate courier/partner apps
-`com.logistics.rider.glovo` and `com.deliveryhero.glovopartner`, and from `com.glovoapp23`, which
-came up while researching this but does not appear to be the current consumer app's id).
+**Package name**: `com.glovo` (matches the manifest's `package="com.glovo"` attribute directly -
+this is now manifest-confirmed, not just a Play Store guess, and distinguishes it from the separate
+courier/partner apps `com.logistics.rider.glovo` and `com.deliveryhero.glovopartner`).
 
-**Why it's shakier than Uber Eats/Bolt Food**: both of those have a flat, locale-independent
-`https://<host>/search?q=<query>` page. Glovo's web app is locale/city-scoped instead
-(`https://glovoapp.com/<lang>/<country>/...`, e.g. `.../en/es/map/cities`) - there's no confirmed
-flat search URL. A `links.glovoapp.com` domain exists (likely a dynamic-link/attribution host,
-similar to Bolt's `*.sng.link` App Links) but its host/path contract wasn't reachable to inspect.
+**`DeeplinkRoutingActivity` (`com.glovoapp.deeplinks.DeeplinkRoutingActivity`) intent filters**
+(`exported="true"`, `launchMode="singleTask"`):
+
+| Scheme(s) | Host | Path | `autoVerify` | Purpose |
+|---|---|---|---|---|
+| `glovo`, `glovoapp` | `open` | — | — | **The real native deep-link entry point** - custom scheme, host must be exactly `open` |
+| `http`, `https` | `glovo.go.link` | — | ✅ true | AppsFlyer OneLink attribution |
+| `http`, `https` | `link.glovoapp.com` | — | ✅ true | Custom-domain attribution link |
+| `http`, `https` | `ufv9.adj.st` | — | ✅ true | Adjust attribution |
+| `http`, `https` | `glovo.app.link`, `glovo-alternate.app.link` | — | ✅ true | Branch.io attribution |
+| `https` | `@string/deeplinks_web_link_host` | — | ✅ true | **The general web App Link surface** - host value not resolvable from this binary manifest alone (no `strings.xml` shipped with it), but almost certainly `glovoapp.com`: that literal host string appears elsewhere in this same manifest (`POCustomTabRedirectActivity`'s `payments-redirect` filter, `host="glovoapp.com"`), and it's consistent with the `link.glovoapp.com` / `glovoapp.com` domain family used throughout |
+
+**Key findings**:
+- Unlike `bolt://action` or `boltfood://`, Glovo's native custom scheme is **host-scoped, not a
+  catch-all**: only `glovo://open` and `glovoapp://open` route to `DeeplinkRoutingActivity`. There
+  is no bare `glovo://` or `glovoapp://` filter with no host constraint (the way Bolt has one for
+  `bolt://`/`taxify://`), so any other host - e.g. a hypothetical `glovoapp://search?...` - matches
+  **nothing** in this manifest and would fail to resolve (an explicit-package intent throws
+  `ActivityNotFoundException`, which is exactly the case this app's `openLinkWithAppFallback()`
+  already handles by falling back to a browser tab).
+- None of the `https`/`http` filters declare a `path`, `pathPrefix`, or `pathPattern` - contrast
+  with Bolt Food's manifest, which explicitly lists `/search`, `/p/*`, `/hc/*`, etc. That means
+  routing-wise *any* path under the verified host (`glovoapp.com`, assumed) matches the intent
+  filter and reaches `DeeplinkRoutingActivity` - but the manifest gives **zero evidence** about what
+  paths or query params that activity's internal router actually recognizes once it's invoked. The
+  filter matching is the app-installed/OS-level routing question; the search behavior is a separate,
+  still-unverified question about the app's internal deep-link parser.
+- The `deeplinks_web_link_host` string resource is the one genuine gap left: this manifest teardown
+  doesn't include `res/values/strings.xml`, so the exact host string is inferred, not read directly.
+  If it turns out to *not* be `glovoapp.com`, the current implementation's host wouldn't even hit
+  this filter and every request would silently fall back to browser (still non-crashing, but
+  pre-search would never work).
 
 **What this app implements** (`FoodDeepLinks.createSearchLink()` for `FoodDeliveryProvider.GLOVO`
 in `FoodDeepLinks.kt`):
 ```
 https://glovoapp.com/search/?query=<QUERY>
 ```
-This guesses that, launched from inside the already-installed app via an explicit-package intent
-(same trick used for the other two providers), Glovo's own in-app session already knows the user's
-city/locale, so the URL's lack of a locale/country path segment may not matter the way it would for
-a plain browser visit - but this is **unconfirmed**. If the app doesn't handle this path at all, the
-explicit-package intent throws and `MainActivity.openLinkWithAppFallback()` falls back to a browser
-tab (same behavior as the other two providers), so the worst case is "opens a browser to a page that
-doesn't resolve either" rather than a crash.
+Assuming `deeplinks_web_link_host` does resolve to `glovoapp.com`, this URL's *host* is now 🔎
+**verified** to route into the Glovo app (better footing than before). The *path* (`/search/`) and
+*query param* (`query`) are still ❓ **unverified guesses** - this manifest doesn't declare or rule
+out a `/search` route the way Bolt Food's does, since Glovo's filters carry no path constraint at
+all. If the internal router doesn't recognize `/search/`, the app most likely still opens (the
+intent filter matches) just without a pre-filled query, rather than falling back to a browser tab -
+a different failure mode than previously documented, worth confirming on-device.
 
 ---
 
@@ -250,11 +273,12 @@ doesn't resolve either" rather than a crash.
    pattern can be used for a specific restaurant once/if a restaurant-ID lookup becomes available.
 4. **Uber Eats**: no verified path exists; the search link is the best available guess. Revisit if
    Uber ever publishes Eats deep-link docs.
-5. **Glovo**: highest priority follow-up of the three food providers - get a device with Glovo
-   installed (or the shipped APK's `AndroidManifest.xml`) and confirm whether `com.glovo` declares
-   any App Link host at all, and whether `glovoapp.com/search/?query=` (or any URL) actually opens
-   the app rather than falling back to browser. Right now this is a guess with no host verification,
-   unlike Bolt Food's confirmed `/search` App Link.
+5. **Glovo**: host-level routing is now manifest-verified (assuming `deeplinks_web_link_host` =
+   `glovoapp.com`, which isn't 100% certain - see §5). What's still missing, and needs a device with
+   Glovo installed: (a) confirm the string resource actually resolves to `glovoapp.com`, and (b)
+   confirm whether `/search/?query=` is a path/param combination the app's internal router
+   recognizes at all, since - unlike Bolt Food - nothing in the manifest declares or rules out a
+   `/search` route (no path constraints are declared on any of Glovo's App Link filters).
 6. **"Same restaurant" across food providers**: not implemented. None of the three platforms expose
    a shared restaurant identifier or a public search API, so matching would require an extra
    search-and-compare step (fuzzy match by name + location) rather than a direct deep link.

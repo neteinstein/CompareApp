@@ -19,9 +19,10 @@ enum class FoodSearchMode {
  * Bolt's ride app - see [BoltDeepLinkCandidates]), so these are unverified: Uber Eats' and Bolt
  * Food's are built from Uber Eats' public website URL structure and from Bolt Food's own
  * AndroidManifest.xml (`com.bolt.deliveryclient`), which declares a verified `https://food.bolt.eu`
- * App Link with a `/search` path - see docs/DEEP_LINKS.md for the full writeup, including why
- * Glovo's is the shakiest of the three (its web app is city/locale-scoped rather than a flat
- * `?q=` search page, and no shipped manifest was available to verify a native scheme against).
+ * App Link with a `/search` path. Glovo's `com.glovo` manifest confirms the `glovoapp.com` host
+ * (likely - see docs/DEEP_LINKS.md) routes to the app at all, but - unlike Bolt Food - declares no
+ * path constraint at all, so whether `/search/?query=` specifically is recognized by the app's
+ * internal router is still unverified.
  * All three links target the app's package explicitly so they open the app directly rather than a
  * browser tab (same trick as [org.neteinstein.compareapp.openBoltWebLink]), but whether the app
  * actually pre-fills the search box from the query param hasn't been confirmed on a device - if it
