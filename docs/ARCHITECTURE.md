@@ -375,6 +375,10 @@ uber://?action=setPickup
 
 ### Bolt Deep Link Format
 
+> For the full picture across all four apps (Uber, Uber Eats, Bolt, Bolt Food) - what's officially
+> documented vs. verified from a manifest vs. still an unverified guess - see
+> [`docs/DEEP_LINKS.md`](DEEP_LINKS.md). The summary below covers Bolt rides only.
+
 Bolt has no published deep-link API. The **host** below is confirmed, not guessed: Bolt's own
 shipped `AndroidManifest.xml` (package `ee.mtakso.client`) declares an `autoVerify="true"`
 intent-filter for `bolt://action` (and `taxify://action`) on `DeeplinkActivity` - any other host,

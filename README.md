@@ -134,6 +134,7 @@ For signed releases and Play Store deployment, see [docs/DEPLOYMENT.md](docs/DEP
 
 - **[CHANGELOG](CHANGELOG.md)** - Release history and version changes
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed low-level architecture
+- **[Deep Links Reference](docs/DEEP_LINKS.md)** - Uber, Uber Eats, Bolt, and Bolt Food deep-link formats: what's officially documented, what's verified from each app's manifest, and what's still an unverified guess
 - **[CI/CD Pipeline](docs/CICD.md)** - Continuous integration and deployment
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Play Store deployment process
 - **[Future Roadmap](docs/BRAINSTORM.md)** - Ideas for future enhancements
