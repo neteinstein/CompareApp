@@ -26,6 +26,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Verify release signing secrets are configured
+        run: |
+          # app/build.gradle silently falls back to debug signing when KEYSTORE_FILE isn't set,
+          # which lets `./gradlew assembleRelease` still work on a dev machine. But on this
+          # ephemeral GitHub Actions runner that fallback creates a brand-new, random debug
+          # keystore on every single run (there's no persisted ~/.android/debug.keystore to
+          # reuse) - so each GitHub Release APK ends up signed with a *different* certificate.
+          # Android refuses to install an update whose signing certificate doesn't match the
+          # currently-installed app's, so the in-app "Update to latest" flow
+          # (UpdateRepositoryImpl/AppUpdateInstaller) always downloads fine and then always fails
+          # to install. Fail loudly here instead of silently publishing another broken update.
+          if [ -z "${{ secrets.KEYSTORE_FILE }}" ]; then
+            echo "::error::KEYSTORE_FILE (and KEYSTORE_PASSWORD/KEY_ALIAS/KEY_PASSWORD) repository secrets are not set. Without them, this workflow falls back to a fresh debug keystore on every run, so each release gets a different signing certificate and in-app updates fail to install. Add the real signing secrets under Settings > Secrets and variables > Actions before releasing."
+            exit 1
+          fi
+
       - name: Build and Sign APK
         env:
           BUILD_NUMBER: ${{ github.run_number }}
