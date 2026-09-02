@@ -27,6 +27,7 @@ import org.neteinstein.compareapp.ui.screens.BoltLinkLabRoute
 import org.neteinstein.compareapp.ui.screens.CompareScreen
 import org.neteinstein.compareapp.ui.screens.SettingsRoute
 import org.neteinstein.compareapp.ui.theme.CompareAppTheme
+import org.neteinstein.compareapp.utils.FoodDeepLinks
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -77,6 +78,9 @@ class MainActivity : ComponentActivity() {
                                 onOpenSettings = { screen = Screen.SETTINGS },
                                 onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
                                     openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
+                                },
+                                onOpenFoodSearch = { uberEatsLink, boltFoodLink ->
+                                    openFoodSearch(uberEatsLink, boltFoodLink)
                                 }
                             )
                         }
@@ -143,6 +147,54 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun openFoodSearch(uberEatsLink: String, boltFoodLink: String) {
+        lifecycleScope.launch {
+            try {
+                openLinkWithAppFallback(
+                    startApp = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uberEatsLink))
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        intent.setPackage(FoodDeepLinks.UBER_EATS_PACKAGE)
+                        startActivity(intent)
+                    },
+                    startBrowser = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uberEatsLink))
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        startActivity(intent)
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Could not open Uber Eats: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, getString(R.string.error_uber_eats), Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
+
+            try {
+                openLinkWithAppFallback(
+                    startApp = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(boltFoodLink))
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        intent.setPackage(FoodDeepLinks.BOLT_FOOD_PACKAGE)
+                        startActivity(intent)
+                    },
+                    startBrowser = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(boltFoodLink))
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        startActivity(intent)
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Could not open Bolt Food: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, getString(R.string.error_bolt_food), Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -187,6 +239,23 @@ internal fun openBoltWebLink(startWebApp: () -> Unit, startWebBrowser: () -> Uni
     } catch (e: ActivityNotFoundException) {
         Log.w("MainActivity", "Bolt app doesn't handle its web link, falling back to browser: ${e.message}")
         startWebBrowser()
+    }
+}
+
+/**
+ * Generalized version of [openBoltWebLink] for [MainActivity.openFoodSearch]'s Uber Eats / Bolt
+ * Food links: [startApp] targets the app's package explicitly so the link resolves straight into
+ * it whenever the app declares a matching intent filter, regardless of App Link verification;
+ * [startBrowser] only runs when that explicit-package intent doesn't resolve at all (app not
+ * installed, or doesn't handle this link).
+ * Top-level so it's unit-testable without a real Activity/Context.
+ */
+internal fun openLinkWithAppFallback(startApp: () -> Unit, startBrowser: () -> Unit) {
+    try {
+        startApp()
+    } catch (e: ActivityNotFoundException) {
+        Log.w("MainActivity", "App doesn't handle link, falling back to browser: ${e.message}")
+        startBrowser()
     }
 }
 

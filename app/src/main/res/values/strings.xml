@@ -10,6 +10,8 @@
     <string name="error_bolt">Could not open Bolt app</string>
     <string name="error_uber">Could not open Uber app</string>
     <string name="error_prepare_deeplinks">Could not prepare location data. Please check your addresses.</string>
+    <string name="error_uber_eats">Could not open Uber Eats app</string>
+    <string name="error_bolt_food">Could not open Bolt Food app</string>
     <string name="use_current_location">Use current location</string>
     <string name="location_permission_denied">Location permission denied</string>
     <string name="location_error">Could not get current location</string>
@@ -35,4 +37,14 @@
     <string name="settings_update_sideloading_warning">To install this update, allow this app to install unknown apps.</string>
     <string name="settings_update_enable_sideloading_cta">Enable</string>
     <string name="settings_update_failed">Update check failed: %1$s</string>
+
+    <string name="food_search_section_title">Compare Food Delivery</string>
+    <string name="food_search_mode_restaurant">Restaurant</string>
+    <string name="food_search_mode_dish">Dish</string>
+    <string name="food_search_query_restaurant_label">Restaurant name</string>
+    <string name="food_search_query_dish_label">Food or dish</string>
+    <string name="food_search_location_label">Location (city, area)</string>
+    <string name="food_search_button">Search Food</string>
+    <string name="food_search_validation_message">Please enter a restaurant or dish to search for</string>
+    <string name="food_search_disclaimer">Neither Uber Eats nor Bolt Food publish a search deep-link format, so this is a best-effort guess - both apps will open, but the search may not pre-fill.</string>
 </resources>

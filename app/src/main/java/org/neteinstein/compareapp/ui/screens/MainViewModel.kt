@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 import org.neteinstein.compareapp.data.repository.AddressSuggestion
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
+import org.neteinstein.compareapp.utils.FoodDeepLinks
+import org.neteinstein.compareapp.utils.FoodSearchMode
 import java.net.URLEncoder
 import java.util.Locale
 import javax.inject.Inject
@@ -35,13 +37,27 @@ class MainViewModel @Inject constructor(
 
     fun checkInstalledApps() {
         val (isUberInstalled, isBoltInstalled) = appRepository.checkRequiredApps()
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 isUberInstalled = isUberInstalled,
                 isBoltInstalled = isBoltInstalled
             )
         }
         Log.d("MainViewModel", "Uber installed: $isUberInstalled, Bolt installed: $isBoltInstalled")
+    }
+
+    // Separate from checkInstalledApps() so existing tests that construct MainViewModel with a
+    // custom AppRepository mock (stubbing only checkRequiredApps(), called from init) don't need
+    // to also stub checkFoodApps() - callers that care about food app state opt in explicitly.
+    fun checkFoodAppsInstalled() {
+        val (isUberEatsInstalled, isBoltFoodInstalled) = appRepository.checkFoodApps()
+        _uiState.update {
+            it.copy(
+                isUberEatsInstalled = isUberEatsInstalled,
+                isBoltFoodInstalled = isBoltFoodInstalled
+            )
+        }
+        Log.d("MainViewModel", "Uber Eats installed: $isUberEatsInstalled, Bolt Food installed: $isBoltFoodInstalled")
     }
 
     fun updatePickup(value: String) {
@@ -292,6 +308,39 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun updateFoodQuery(value: String) {
+        _uiState.update { it.copy(foodQuery = value) }
+    }
+
+    fun updateFoodLocation(value: String) {
+        _uiState.update { it.copy(foodLocation = value) }
+    }
+
+    fun setFoodSearchMode(mode: FoodSearchMode) {
+        _uiState.update { it.copy(foodSearchMode = mode) }
+    }
+
+    /**
+     * Builds the Uber Eats / Bolt Food search links from the current query + location - see
+     * [FoodDeepLinks] for why these are unverified best-effort guesses rather than a confirmed
+     * format. No geocoding needed here (unlike [prepareDeepLinks]): both links take free-text
+     * search terms, not coordinates.
+     */
+    fun prepareFoodSearchLinks(
+        onSuccess: (uberEatsLink: String, boltFoodLink: String) -> Unit,
+        onError: () -> Unit = {}
+    ) {
+        val currentState = _uiState.value
+        if (currentState.foodQuery.isBlank()) {
+            onError()
+            return
+        }
+
+        val uberEatsLink = FoodDeepLinks.createUberEatsSearchLink(currentState.foodQuery, currentState.foodLocation)
+        val boltFoodLink = FoodDeepLinks.createBoltFoodSearchLink(currentState.foodQuery, currentState.foodLocation)
+        onSuccess(uberEatsLink, boltFoodLink)
+    }
+
     companion object {
         private const val MIN_SUGGESTION_QUERY_LENGTH = 3
         private const val SUGGESTION_DEBOUNCE_MS = 300L
@@ -309,5 +358,10 @@ data class CompareUiState(
     val pickupCoordinates: Pair<Double, Double>? = null,
     val dropoffCoordinates: Pair<Double, Double>? = null,
     val pickupSuggestions: List<AddressSuggestion> = emptyList(),
-    val dropoffSuggestions: List<AddressSuggestion> = emptyList()
+    val dropoffSuggestions: List<AddressSuggestion> = emptyList(),
+    val foodQuery: String = "",
+    val foodLocation: String = "",
+    val foodSearchMode: FoodSearchMode = FoodSearchMode.RESTAURANT,
+    val isUberEatsInstalled: Boolean = false,
+    val isBoltFoodInstalled: Boolean = false
 )
