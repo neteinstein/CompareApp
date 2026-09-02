@@ -53,6 +53,7 @@ import org.neteinstein.compareapp.R
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
+    onOpenBoltLinkLab: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -80,6 +81,7 @@ fun SettingsRoute(
         onUpdateClicked = viewModel::onUpdateClicked,
         onEnableSideloadingClicked = viewModel::onEnableSideloadingClicked,
         onChangeLanguageClicked = onChangeLanguageClicked,
+        onOpenBoltLinkLab = onOpenBoltLinkLab,
         modifier = modifier
     )
 }
@@ -97,7 +99,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onUpdateClicked: () -> Unit = {},
     onEnableSideloadingClicked: () -> Unit = {},
-    onChangeLanguageClicked: (() -> Unit)? = null
+    onChangeLanguageClicked: (() -> Unit)? = null,
+    onOpenBoltLinkLab: () -> Unit = {}
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -142,6 +145,23 @@ fun SettingsScreen(
                 onUpdateClicked = onUpdateClicked,
                 onEnableSideloadingClicked = onEnableSideloadingClicked
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Diagnostics",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Try out candidate Bolt deep-link formats against the installed Bolt app.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                TextButton(onClick = onOpenBoltLinkLab) {
+                    Text(text = "Open Bolt Link Lab")
+                }
+            }
         }
     }
 }

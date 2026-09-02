@@ -18,13 +18,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TripOrigin
 import androidx.compose.material.icons.filled.WarningAmber
@@ -42,6 +45,9 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -65,6 +71,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.neteinstein.compareapp.R
 import org.neteinstein.compareapp.utils.DeepLinkLocationParser
+import org.neteinstein.compareapp.utils.FoodSearchMode
 import org.neteinstein.compareapp.utils.MapsShareLinkResolver
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +80,8 @@ fun CompareScreen(
     viewModel: MainViewModel = hiltViewModel(),
     incomingLocationUri: Uri? = null,
     onOpenSettings: () -> Unit = {},
-    onOpenDeepLinks: (uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) -> Unit
+    onOpenDeepLinks: (uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) -> Unit,
+    onOpenFoodSearch: (uberEatsLink: String, boltFoodLink: String) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -86,6 +94,7 @@ fun CompareScreen(
     val locationPermissionDeniedText = stringResource(R.string.location_permission_denied)
     val validationMessageText = stringResource(R.string.validation_message)
     val errorPrepareDeeplinksText = stringResource(R.string.error_prepare_deeplinks)
+    val foodValidationMessageText = stringResource(R.string.food_search_validation_message)
 
     // Location permission launcher
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -129,12 +138,16 @@ fun CompareScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 viewModel.checkInstalledApps()
+                viewModel.checkFoodAppsInstalled()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.checkFoodAppsInstalled()
     }
 
     // Handle an incoming "share a location with this app" deep link: prepopulate the
@@ -169,6 +182,16 @@ fun CompareScreen(
         "Warning: ${missingApps.joinToString(" and ")} ${if (missingApps.size == 1) "app is" else "apps are"} required for this to work"
     }
 
+    val foodWarningMessage = if (uiState.isUberEatsInstalled && uiState.isBoltFoodInstalled) {
+        null
+    } else {
+        val missingApps = buildList {
+            if (!uiState.isUberEatsInstalled) add("Uber Eats")
+            if (!uiState.isBoltFoodInstalled) add("Bolt Food")
+        }
+        "Warning: ${missingApps.joinToString(" and ")} ${if (missingApps.size == 1) "app is" else "apps are"} required for this to work"
+    }
+
     val loadingText = stringResource(R.string.loading)
     val compareText = stringResource(R.string.compare)
 
@@ -176,6 +199,7 @@ fun CompareScreen(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -385,6 +409,129 @@ fun CompareScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                     }
+                }
+            }
+
+            foodWarningMessage?.let { message ->
+                WarningBanner(message = message, modifier = Modifier.padding(top = 20.dp))
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = stringResource(R.string.food_search_section_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 14.dp)
+                    )
+
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            selected = uiState.foodSearchMode == FoodSearchMode.RESTAURANT,
+                            onClick = { viewModel.setFoodSearchMode(FoodSearchMode.RESTAURANT) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        ) {
+                            Text(stringResource(R.string.food_search_mode_restaurant))
+                        }
+                        SegmentedButton(
+                            selected = uiState.foodSearchMode == FoodSearchMode.DISH,
+                            onClick = { viewModel.setFoodSearchMode(FoodSearchMode.DISH) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        ) {
+                            Text(stringResource(R.string.food_search_mode_dish))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = uiState.foodQuery,
+                        onValueChange = viewModel::updateFoodQuery,
+                        label = {
+                            Text(
+                                text = if (uiState.foodSearchMode == FoodSearchMode.RESTAURANT) {
+                                    stringResource(R.string.food_search_query_restaurant_label)
+                                } else {
+                                    stringResource(R.string.food_search_query_dish_label)
+                                }
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Restaurant,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = uiState.foodLocation,
+                        onValueChange = viewModel::updateFoodLocation,
+                        label = { Text(stringResource(R.string.food_search_location_label)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Place,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.prepareFoodSearchLinks(
+                                onSuccess = { uberEatsLink, boltFoodLink ->
+                                    onOpenFoodSearch(uberEatsLink, boltFoodLink)
+                                },
+                                onError = {
+                                    Toast.makeText(context, foodValidationMessageText, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Restaurant,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.food_search_button),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Text(
+                        text = stringResource(R.string.food_search_disclaimer),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
                 }
             }
         }

@@ -375,9 +375,23 @@ uber://?action=setPickup
 
 ### Bolt Deep Link Format
 
+> For the full picture across all four apps (Uber, Uber Eats, Bolt, Bolt Food) - what's officially
+> documented vs. verified from a manifest vs. still an unverified guess - see
+> [`docs/DEEP_LINKS.md`](DEEP_LINKS.md). The summary below covers Bolt rides only.
+
+Bolt has no published deep-link API. The **host** below is confirmed, not guessed: Bolt's own
+shipped `AndroidManifest.xml` (package `ee.mtakso.client`) declares an `autoVerify="true"`
+intent-filter for `bolt://action` (and `taxify://action`) on `DeeplinkActivity` - any other host,
+including `ride`, only matches a generic catch-all filter with no routing behind it, and `bolt.eu`
+is not declared as an App Link host at all (only `scooters.taxify.eu`, `bolt.sng.link`, and
+`maps.google.com` are). The **query parameters** below are still an unverified guess at what
+`DeeplinkActivity` reads once it's on the `action` host - see
+[`BoltDeepLinkCandidates`](../app/src/main/java/org/neteinstein/compareapp/utils/BoltDeepLinkCandidates.kt)
+and the in-app Bolt Link Lab (Settings > Diagnostics) for testing alternatives on-device.
+
 **Primary (Coordinate-based)**:
 ```
-bolt://ride
+bolt://action
   ?pickup_lat=<LAT>
   &pickup_lng=<LNG>
   &destination_lat=<LAT>
@@ -388,14 +402,14 @@ bolt://ride
 
 **Fallback (Text-based)**:
 ```
-bolt://ride
+bolt://action
   ?pickup=<URL_ENCODED_ADDRESS>
   &destination=<URL_ENCODED_ADDRESS>
 ```
 
 **Example**:
 ```
-bolt://ride
+bolt://action
   ?pickup_lat=40.758896
   &pickup_lng=-73.985130
   &destination_lat=40.785091
