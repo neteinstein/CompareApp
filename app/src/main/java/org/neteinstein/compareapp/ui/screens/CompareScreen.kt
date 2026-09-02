@@ -71,6 +71,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.neteinstein.compareapp.R
 import org.neteinstein.compareapp.utils.DeepLinkLocationParser
+import org.neteinstein.compareapp.utils.FoodDeliveryProvider
 import org.neteinstein.compareapp.utils.FoodSearchMode
 import org.neteinstein.compareapp.utils.MapsShareLinkResolver
 
@@ -81,7 +82,7 @@ fun CompareScreen(
     incomingLocationUri: Uri? = null,
     onOpenSettings: () -> Unit = {},
     onOpenDeepLinks: (uberDeepLink: String, boltDeepLink: String, boltDeepLinkWeb: String) -> Unit,
-    onOpenFoodSearch: (uberEatsLink: String, boltFoodLink: String) -> Unit = { _, _ -> }
+    onOpenFoodSearch: (links: Map<FoodDeliveryProvider, String>) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -182,14 +183,14 @@ fun CompareScreen(
         "Warning: ${missingApps.joinToString(" and ")} ${if (missingApps.size == 1) "app is" else "apps are"} required for this to work"
     }
 
-    val foodWarningMessage = if (uiState.isUberEatsInstalled && uiState.isBoltFoodInstalled) {
+    val missingFoodApps = uiState.selectedFoodProviders - uiState.installedFoodProviders
+    val foodWarningMessage = if (missingFoodApps.isEmpty()) {
         null
     } else {
-        val missingApps = buildList {
-            if (!uiState.isUberEatsInstalled) add("Uber Eats")
-            if (!uiState.isBoltFoodInstalled) add("Bolt Food")
-        }
-        "Warning: ${missingApps.joinToString(" and ")} ${if (missingApps.size == 1) "app is" else "apps are"} required for this to work"
+        val missingAppNames = FoodDeliveryProvider.entries
+            .filter { it in missingFoodApps }
+            .map { it.displayName }
+        "Warning: ${missingAppNames.joinToString(" and ")} ${if (missingAppNames.size == 1) "app is" else "apps are"} required for this to work"
     }
 
     val loadingText = stringResource(R.string.loading)
@@ -497,9 +498,7 @@ fun CompareScreen(
                     Button(
                         onClick = {
                             viewModel.prepareFoodSearchLinks(
-                                onSuccess = { uberEatsLink, boltFoodLink ->
-                                    onOpenFoodSearch(uberEatsLink, boltFoodLink)
-                                },
+                                onSuccess = { links -> onOpenFoodSearch(links) },
                                 onError = {
                                     Toast.makeText(context, foodValidationMessageText, Toast.LENGTH_SHORT).show()
                                 }

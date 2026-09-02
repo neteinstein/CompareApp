@@ -27,7 +27,7 @@ import org.neteinstein.compareapp.ui.screens.BoltLinkLabRoute
 import org.neteinstein.compareapp.ui.screens.CompareScreen
 import org.neteinstein.compareapp.ui.screens.SettingsRoute
 import org.neteinstein.compareapp.ui.theme.CompareAppTheme
-import org.neteinstein.compareapp.utils.FoodDeepLinks
+import org.neteinstein.compareapp.utils.FoodDeliveryProvider
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -79,9 +79,7 @@ class MainActivity : ComponentActivity() {
                                 onOpenDeepLinks = { uberDeepLink, boltDeepLink, boltDeepLinkWeb ->
                                     openInSplitScreen(uberDeepLink, boltDeepLink, boltDeepLinkWeb)
                                 },
-                                onOpenFoodSearch = { uberEatsLink, boltFoodLink ->
-                                    openFoodSearch(uberEatsLink, boltFoodLink)
-                                }
+                                onOpenFoodSearch = { links -> openFoodSearch(links) }
                             )
                         }
                     }
@@ -148,49 +146,38 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openFoodSearch(uberEatsLink: String, boltFoodLink: String) {
+    /**
+     * Opens each provider's search link in turn (staggered by [SPLIT_SCREEN_DELAY_MS], same as
+     * [openInSplitScreen]) so both land side by side in split screen. [links] always has exactly 2
+     * entries - the pair currently selected under Settings > Comparison configuration - ordered by
+     * [FoodDeliveryProvider]'s declaration order (see [MainViewModel.prepareFoodSearchLinks]).
+     */
+    private fun openFoodSearch(links: Map<FoodDeliveryProvider, String>) {
         lifecycleScope.launch {
-            try {
-                openLinkWithAppFallback(
-                    startApp = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uberEatsLink))
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                        intent.setPackage(FoodDeepLinks.UBER_EATS_PACKAGE)
-                        startActivity(intent)
-                    },
-                    startBrowser = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uberEatsLink))
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                        startActivity(intent)
-                    }
-                )
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Could not open Uber Eats: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, getString(R.string.error_uber_eats), Toast.LENGTH_SHORT).show()
+            links.entries.forEachIndexed { index, (provider, link) ->
+                if (index > 0) {
+                    kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
                 }
-            }
-
-            kotlinx.coroutines.delay(SPLIT_SCREEN_DELAY_MS)
-
-            try {
-                openLinkWithAppFallback(
-                    startApp = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(boltFoodLink))
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                        intent.setPackage(FoodDeepLinks.BOLT_FOOD_PACKAGE)
-                        startActivity(intent)
-                    },
-                    startBrowser = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(boltFoodLink))
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                        startActivity(intent)
+                try {
+                    openLinkWithAppFallback(
+                        startApp = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                            intent.setPackage(provider.packageName)
+                            startActivity(intent)
+                        },
+                        startBrowser = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                            startActivity(intent)
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Could not open ${provider.displayName}: ${e.message}")
+                    withContext(Dispatchers.Main) {
+                        val message = getString(R.string.error_food_provider, provider.displayName)
+                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                     }
-                )
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Could not open Bolt Food: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, getString(R.string.error_bolt_food), Toast.LENGTH_SHORT).show()
                 }
             }
         }

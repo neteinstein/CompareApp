@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.neteinstein.compareapp.data.repository.AppRepository
 import org.neteinstein.compareapp.data.repository.AppRepositoryImpl
+import org.neteinstein.compareapp.data.repository.ComparisonConfigRepository
+import org.neteinstein.compareapp.data.repository.ComparisonConfigRepositoryImpl
 import org.neteinstein.compareapp.data.repository.LocationRepository
 import org.neteinstein.compareapp.data.repository.LocationRepositoryImpl
 import org.neteinstein.compareapp.data.repository.UpdateRepository
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     abstract fun bindUpdateRepository(
         updateRepositoryImpl: UpdateRepositoryImpl
     ): UpdateRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindComparisonConfigRepository(
+        comparisonConfigRepositoryImpl: ComparisonConfigRepositoryImpl
+    ): ComparisonConfigRepository
 }

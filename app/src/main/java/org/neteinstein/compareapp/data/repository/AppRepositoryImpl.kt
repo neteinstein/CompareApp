@@ -15,8 +15,6 @@ class AppRepositoryImpl @Inject constructor(
     companion object {
         private const val UBER_PACKAGE_NAME = "com.ubercab"
         private const val BOLT_PACKAGE_NAME = "ee.mtakso.client"
-        private const val UBER_EATS_PACKAGE_NAME = "com.ubercab.eats"
-        private const val BOLT_FOOD_PACKAGE_NAME = "com.bolt.deliveryclient"
     }
 
     override fun isAppInstalled(packageName: String): Boolean {
@@ -33,11 +31,5 @@ class AppRepositoryImpl @Inject constructor(
         val isUberInstalled = isAppInstalled(UBER_PACKAGE_NAME)
         val isBoltInstalled = isAppInstalled(BOLT_PACKAGE_NAME)
         return Pair(isUberInstalled, isBoltInstalled)
-    }
-
-    override fun checkFoodApps(): Pair<Boolean, Boolean> {
-        val isUberEatsInstalled = isAppInstalled(UBER_EATS_PACKAGE_NAME)
-        val isBoltFoodInstalled = isAppInstalled(BOLT_FOOD_PACKAGE_NAME)
-        return Pair(isUberEatsInstalled, isBoltFoodInstalled)
     }
 }

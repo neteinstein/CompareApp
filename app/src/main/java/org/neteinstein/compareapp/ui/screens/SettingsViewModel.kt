@@ -7,9 +7,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.neteinstein.compareapp.data.repository.AppUpdate
+import org.neteinstein.compareapp.data.repository.ComparisonConfigRepository
 import org.neteinstein.compareapp.data.repository.UpdateCheckResult
 import org.neteinstein.compareapp.data.repository.UpdateRepository
 import org.neteinstein.compareapp.utils.AppUpdateInstaller
+import org.neteinstein.compareapp.utils.FoodDeliveryProvider
 import javax.inject.Inject
 
 /**
@@ -44,17 +46,33 @@ sealed class UpdateStatus {
 }
 
 data class SettingsUiState(
-    val updateStatus: UpdateStatus = UpdateStatus.Idle
+    val updateStatus: UpdateStatus = UpdateStatus.Idle,
+    /**
+     * The currently selected pair of food delivery apps, ordered oldest-selection-first - see
+     * [SettingsViewModel.onFoodProviderToggled] for why the order matters. Always exactly 2 once
+     * initialized from [ComparisonConfigRepository].
+     */
+    val selectedFoodProviders: List<FoodDeliveryProvider> = emptyList(),
+    /** Diagnostics (Bolt Link Lab) only shows once [SettingsViewModel.onTitleClicked] fires 10 times. */
+    val diagnosticsUnlocked: Boolean = false
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val updateRepository: UpdateRepository,
-    private val appUpdateInstaller: AppUpdateInstaller
+    private val appUpdateInstaller: AppUpdateInstaller,
+    private val comparisonConfigRepository: ComparisonConfigRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState())
+    private val _uiState = MutableStateFlow(
+        SettingsUiState(
+            selectedFoodProviders = FoodDeliveryProvider.entries
+                .filter { it in comparisonConfigRepository.selectedFoodProviders.value }
+        )
+    )
     val uiState = _uiState.asStateFlow()
+
+    private var titleTapCount = 0
 
     /**
      * Runs a background update check when Settings is entered so the "Update to latest" button can
@@ -101,6 +119,35 @@ class SettingsViewModel @Inject constructor(
         appUpdateInstaller.openInstallPermissionSettings()
     }
 
+    /**
+     * Hidden gesture that reveals the Diagnostics section (Bolt Link Lab) after the Settings
+     * title has been tapped 10 times in one visit to this screen - keeps it out of the way of
+     * regular users while still reachable for on-device deep-link debugging.
+     */
+    fun onTitleClicked() {
+        titleTapCount++
+        if (titleTapCount >= DIAGNOSTICS_UNLOCK_TAP_COUNT) {
+            _uiState.value = _uiState.value.copy(diagnosticsUnlocked = true)
+        }
+    }
+
+    /**
+     * Toggles [provider] in the food comparison pair, keeping it at exactly 2 selections at all
+     * times:
+     * - Tapping an already-selected provider is a no-op - unselecting it would drop the pair to 1.
+     * - Tapping the unselected provider swaps it in for whichever of the current 2 was selected
+     *   least recently, so the pair stays at 2 without the user ever having to explicitly
+     *   deselect anything.
+     */
+    fun onFoodProviderToggled(provider: FoodDeliveryProvider) {
+        val current = _uiState.value.selectedFoodProviders
+        if (provider in current) return
+
+        val updated = listOf(current[1], provider)
+        _uiState.value = _uiState.value.copy(selectedFoodProviders = updated)
+        comparisonConfigRepository.setSelectedFoodProviders(updated.toSet())
+    }
+
     private suspend fun downloadAndInstall(update: AppUpdate) {
         if (!appUpdateInstaller.canInstallPackages()) {
             _uiState.value = _uiState.value.copy(updateStatus = UpdateStatus.SideloadingBlocked)
@@ -119,5 +166,9 @@ class SettingsViewModel @Inject constructor(
         } else {
             _uiState.value = _uiState.value.copy(updateStatus = UpdateStatus.Failed("Download failed"))
         }
+    }
+
+    private companion object {
+        const val DIAGNOSTICS_UNLOCK_TAP_COUNT = 10
     }
 }

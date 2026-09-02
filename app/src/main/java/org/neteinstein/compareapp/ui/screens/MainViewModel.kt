@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.neteinstein.compareapp.data.repository.AddressSuggestion
 import org.neteinstein.compareapp.data.repository.AppRepository
+import org.neteinstein.compareapp.data.repository.ComparisonConfigRepository
 import org.neteinstein.compareapp.data.repository.LocationRepository
 import org.neteinstein.compareapp.utils.FoodDeepLinks
+import org.neteinstein.compareapp.utils.FoodDeliveryProvider
 import org.neteinstein.compareapp.utils.FoodSearchMode
 import java.net.URLEncoder
 import java.util.Locale
@@ -22,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
-    private val appRepository: AppRepository
+    private val appRepository: AppRepository,
+    private val comparisonConfigRepository: ComparisonConfigRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CompareUiState())
@@ -33,6 +36,7 @@ class MainViewModel @Inject constructor(
 
     init {
         checkInstalledApps()
+        checkFoodAppsInstalled()
     }
 
     fun checkInstalledApps() {
@@ -46,18 +50,20 @@ class MainViewModel @Inject constructor(
         Log.d("MainViewModel", "Uber installed: $isUberInstalled, Bolt installed: $isBoltInstalled")
     }
 
-    // Separate from checkInstalledApps() so existing tests that construct MainViewModel with a
-    // custom AppRepository mock (stubbing only checkRequiredApps(), called from init) don't need
-    // to also stub checkFoodApps() - callers that care about food app state opt in explicitly.
+    /**
+     * Re-reads the selected pair from [ComparisonConfigRepository] (a plain synchronous
+     * [kotlinx.coroutines.flow.StateFlow] read, not a suspend call) and checks which of that pair
+     * is actually installed. Called from [init] for the first render, and again by
+     * [org.neteinstein.compareapp.ui.screens.CompareScreen] on `ON_RESUME` - since Settings and
+     * this screen share the same [MainViewModel] instance (no Navigation-Compose back stack, just
+     * a local screen flag - see [org.neteinstein.compareapp.MainActivity]), resuming here after
+     * changing the pair in Settings is exactly when a stale selection would otherwise linger.
+     */
     fun checkFoodAppsInstalled() {
-        val (isUberEatsInstalled, isBoltFoodInstalled) = appRepository.checkFoodApps()
-        _uiState.update {
-            it.copy(
-                isUberEatsInstalled = isUberEatsInstalled,
-                isBoltFoodInstalled = isBoltFoodInstalled
-            )
-        }
-        Log.d("MainViewModel", "Uber Eats installed: $isUberEatsInstalled, Bolt Food installed: $isBoltFoodInstalled")
+        val selected = comparisonConfigRepository.selectedFoodProviders.value
+        val installed = selected.filter { appRepository.isAppInstalled(it.packageName) }.toSet()
+        _uiState.update { it.copy(selectedFoodProviders = selected, installedFoodProviders = installed) }
+        Log.d("MainViewModel", "Installed food providers: ${installed.map { it.displayName }}")
     }
 
     fun updatePickup(value: String) {
@@ -338,13 +344,15 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Builds the Uber Eats / Bolt Food search links from the current query + location - see
-     * [FoodDeepLinks] for why these are unverified best-effort guesses rather than a confirmed
-     * format. No geocoding needed here (unlike [prepareDeepLinks]): both links take free-text
-     * search terms, not coordinates.
+     * Builds the search links for the currently selected pair of food providers (Settings >
+     * Comparison configuration) from the current query + location - see [FoodDeepLinks] for why
+     * these are unverified best-effort guesses rather than a confirmed format. No geocoding needed
+     * here (unlike [prepareDeepLinks]): all these links take free-text search terms, not
+     * coordinates. Ordered by [FoodDeliveryProvider]'s declaration order so which app opens first
+     * is stable regardless of the order the pair was selected in.
      */
     fun prepareFoodSearchLinks(
-        onSuccess: (uberEatsLink: String, boltFoodLink: String) -> Unit,
+        onSuccess: (links: Map<FoodDeliveryProvider, String>) -> Unit,
         onError: () -> Unit = {}
     ) {
         val currentState = _uiState.value
@@ -353,9 +361,10 @@ class MainViewModel @Inject constructor(
             return
         }
 
-        val uberEatsLink = FoodDeepLinks.createUberEatsSearchLink(currentState.foodQuery, currentState.foodLocation)
-        val boltFoodLink = FoodDeepLinks.createBoltFoodSearchLink(currentState.foodQuery, currentState.foodLocation)
-        onSuccess(uberEatsLink, boltFoodLink)
+        val links = FoodDeliveryProvider.entries
+            .filter { it in currentState.selectedFoodProviders }
+            .associateWith { FoodDeepLinks.createSearchLink(it, currentState.foodQuery, currentState.foodLocation) }
+        onSuccess(links)
     }
 
     companion object {
@@ -379,6 +388,6 @@ data class CompareUiState(
     val foodQuery: String = "",
     val foodLocation: String = "",
     val foodSearchMode: FoodSearchMode = FoodSearchMode.RESTAURANT,
-    val isUberEatsInstalled: Boolean = false,
-    val isBoltFoodInstalled: Boolean = false
+    val selectedFoodProviders: Set<FoodDeliveryProvider> = emptySet(),
+    val installedFoodProviders: Set<FoodDeliveryProvider> = emptySet()
 )

@@ -1,9 +1,11 @@
 # Deep Links Reference
 
-Everything this project knows about the deep-link formats for Uber, Uber Eats, Bolt (rides), and
-Bolt Food, gathered while debugging the "Bolt opens with no destination set" issue (see PRs #63,
-#79, #80, #81). Keep this updated as new evidence comes in - it's the source of truth for the next
-person (or the next AI session) working on any of these integrations.
+Everything this project knows about the deep-link formats for Uber, Uber Eats, Bolt (rides), Bolt
+Food, and Glovo, gathered while debugging the "Bolt opens with no destination set" issue (see PRs
+#63, #79, #80, #81) and while adding Glovo as a third food delivery option (see the Comparison
+configuration section in Settings, and `ComparisonConfigRepository`). Keep this updated as new
+evidence comes in - it's the source of truth for the next person (or the next AI session) working
+on any of these integrations.
 
 ## Confidence legend
 
@@ -187,6 +189,41 @@ still unconfirmed on-device.
 
 ---
 
+## 5. Glovo — `com.glovo` — ❓ UNVERIFIED GUESS
+
+**Source**: no official documentation found (same situation as Uber Eats). No shipped
+`AndroidManifest.xml` was available to inspect for this one either (unlike Bolt/Bolt Food, where a
+real manifest was shared during those tasks) - both the network fetches attempted while researching
+this and a manifest teardown were unavailable in that session's environment, so *nothing* below the
+package name is host/param-verified. This is the least-confident entry in this document; treat it
+as a starting point for on-device testing, not a trustworthy format.
+
+**Package name**: `com.glovo` (confirmed via web search against the Play Store listing for "Glovo:
+Food & Grocery Delivery" - note this is distinct from the separate courier/partner apps
+`com.logistics.rider.glovo` and `com.deliveryhero.glovopartner`, and from `com.glovoapp23`, which
+came up while researching this but does not appear to be the current consumer app's id).
+
+**Why it's shakier than Uber Eats/Bolt Food**: both of those have a flat, locale-independent
+`https://<host>/search?q=<query>` page. Glovo's web app is locale/city-scoped instead
+(`https://glovoapp.com/<lang>/<country>/...`, e.g. `.../en/es/map/cities`) - there's no confirmed
+flat search URL. A `links.glovoapp.com` domain exists (likely a dynamic-link/attribution host,
+similar to Bolt's `*.sng.link` App Links) but its host/path contract wasn't reachable to inspect.
+
+**What this app implements** (`FoodDeepLinks.createSearchLink()` for `FoodDeliveryProvider.GLOVO`
+in `FoodDeepLinks.kt`):
+```
+https://glovoapp.com/search/?query=<QUERY>
+```
+This guesses that, launched from inside the already-installed app via an explicit-package intent
+(same trick used for the other two providers), Glovo's own in-app session already knows the user's
+city/locale, so the URL's lack of a locale/country path segment may not matter the way it would for
+a plain browser visit - but this is **unconfirmed**. If the app doesn't handle this path at all, the
+explicit-package intent throws and `MainActivity.openLinkWithAppFallback()` falls back to a browser
+tab (same behavior as the other two providers), so the worst case is "opens a browser to a page that
+doesn't resolve either" rather than a crash.
+
+---
+
 ## Where this lives in the codebase
 
 | Concern | File |
@@ -194,9 +231,11 @@ still unconfirmed on-device.
 | Uber ride link builder | `app/src/main/java/org/neteinstein/compareapp/ui/screens/MainViewModel.kt` (`createUberDeepLink`) |
 | Bolt ride link builder | same file (`createBoltDeepLink`, `createBoltDeepLinkWeb`) |
 | Bolt ride candidate formats (for on-device testing) | `app/src/main/java/org/neteinstein/compareapp/utils/BoltDeepLinkCandidates.kt` |
-| Bolt Link Lab UI (Settings → Diagnostics) | `app/src/main/java/org/neteinstein/compareapp/ui/screens/BoltLinkLabScreen.kt` / `BoltLinkLabViewModel.kt` |
-| Food search link builders (Uber Eats / Bolt Food) | `app/src/main/java/org/neteinstein/compareapp/utils/FoodDeepLinks.kt` |
-| Launch mechanics (native → web/browser fallback, explicit package targeting) | `app/src/main/java/org/neteinstein/compareapp/MainActivity.kt` (`launchBoltWithFallback`, `openBoltWebLink`, `openLinkWithAppFallback`) |
+| Bolt Link Lab UI (Settings → Diagnostics, tap the title 10 times to reveal) | `app/src/main/java/org/neteinstein/compareapp/ui/screens/BoltLinkLabScreen.kt` / `BoltLinkLabViewModel.kt` |
+| Food providers (package names, display names) | `app/src/main/java/org/neteinstein/compareapp/utils/FoodDeliveryProvider.kt` |
+| Food search link builders (Uber Eats / Bolt Food / Glovo) | `app/src/main/java/org/neteinstein/compareapp/utils/FoodDeepLinks.kt` |
+| Which 2 of 3 food providers are active (Settings → Comparison configuration) | `app/src/main/java/org/neteinstein/compareapp/data/repository/ComparisonConfigRepository.kt` / `ComparisonConfigRepositoryImpl.kt` |
+| Launch mechanics (native → web/browser fallback, explicit package targeting) | `app/src/main/java/org/neteinstein/compareapp/MainActivity.kt` (`launchBoltWithFallback`, `openBoltWebLink`, `openLinkWithAppFallback`, `openFoodSearch`) |
 
 ## Open items / suggested next steps
 
@@ -211,6 +250,11 @@ still unconfirmed on-device.
    pattern can be used for a specific restaurant once/if a restaurant-ID lookup becomes available.
 4. **Uber Eats**: no verified path exists; the search link is the best available guess. Revisit if
    Uber ever publishes Eats deep-link docs.
-5. **"Same restaurant" across Uber Eats / Bolt Food**: not implemented. Neither platform exposes a
-   shared restaurant identifier or a public search API, so matching would require an extra
+5. **Glovo**: highest priority follow-up of the three food providers - get a device with Glovo
+   installed (or the shipped APK's `AndroidManifest.xml`) and confirm whether `com.glovo` declares
+   any App Link host at all, and whether `glovoapp.com/search/?query=` (or any URL) actually opens
+   the app rather than falling back to browser. Right now this is a guess with no host verification,
+   unlike Bolt Food's confirmed `/search` App Link.
+6. **"Same restaurant" across food providers**: not implemented. None of the three platforms expose
+   a shared restaurant identifier or a public search API, so matching would require an extra
    search-and-compare step (fuzzy match by name + location) rather than a direct deep link.

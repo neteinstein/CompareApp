@@ -83,8 +83,17 @@
             </intent-filter>
         </receiver>
     </application>
+    <!-- Package visibility (API 30+): without a <queries> entry, PackageManager.getPackageInfo()
+         (AppRepository.isAppInstalled) throws NameNotFoundException for any package not listed
+         here - not just implicit intent resolution - so every app this screen checks/targets by
+         package (ride comparison + food search) needs an entry, or "app not installed" warnings
+         become permanently, silently wrong on modern Android regardless of what's actually
+         installed. See FoodDeliveryProvider.kt for the food package names. -->
     <queries>
         <package android:name="com.ubercab" />
         <package android:name="ee.mtakso.client" />
+        <package android:name="com.ubercab.eats" />
+        <package android:name="com.bolt.deliveryclient" />
+        <package android:name="com.glovo" />
     </queries>
 </manifest>
