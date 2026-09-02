@@ -23,24 +23,14 @@ android {
 
     signingConfigs {
         release {
-            // Signing configuration using environment variables or GitHub secrets
+            // Signing configuration using environment variables or GitHub secrets.
+            // KEYSTORE_FILE is always the base64-encoded contents of the keystore, not a path.
             if (System.getenv("KEYSTORE_FILE")) {
-                def keystoreFile = System.getenv("KEYSTORE_FILE")
-                // Check if KEYSTORE_FILE is a base64 encoded string (not a file path)
-                // Base64 strings are typically much longer (>100 chars) and don't contain path separators
-                // A file path like "release.keystore" would be short and may contain / or \
-                def minBase64Length = 100
-                if (!keystoreFile.contains('/') && !keystoreFile.contains('\\') && keystoreFile.length() > minBase64Length) {
-                    // Decode base64-encoded keystore data
-                    def keystoreBytes = keystoreFile.decodeBase64()
-                    def keystorePath = file("${buildDir}/release.keystore")
-                    keystorePath.parentFile.mkdirs()
-                    keystorePath.bytes = keystoreBytes
-                    storeFile keystorePath
-                } else {
-                    // Treat as file path
-                    storeFile file(keystoreFile)
-                }
+                def keystoreBytes = System.getenv("KEYSTORE_FILE").decodeBase64()
+                def keystorePath = file("${buildDir}/release.keystore")
+                keystorePath.parentFile.mkdirs()
+                keystorePath.bytes = keystoreBytes
+                storeFile keystorePath
                 storePassword System.getenv("KEYSTORE_PASSWORD")
                 keyAlias System.getenv("KEY_ALIAS")
                 keyPassword System.getenv("KEY_PASSWORD")
