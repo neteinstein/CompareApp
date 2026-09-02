@@ -5,10 +5,24 @@ import java.util.Locale
 /**
  * One guess at Bolt's undocumented rider deep-link contract: a human-readable [label] plus the
  * `bolt://` scheme URI (nullable - some candidates only make sense as a web link) and the
- * `https://` web URI to try. Bolt has no published deep-link API, so every candidate here is
- * unverified; [BoltLinkLabScreen][org.neteinstein.compareapp.ui.screens.BoltLinkLabScreen] exists
- * to let a person try each one against the real Bolt app and report back which (if any) actually
- * sets the destination, so the working one can replace the guess in [BoltDeepLinkCandidates.build].
+ * `https://` web URI to try.
+ *
+ * The **host** is no longer a guess: `ee.mtakso.client`'s own shipped AndroidManifest.xml
+ * declares an `autoVerify="true"` intent-filter for `bolt://action` (and `taxify://action`)
+ * specifically on `DeeplinkActivity`, while any other host - including the `ride` host every
+ * candidate here used before - only matches a generic catch-all filter with no host constraint,
+ * meaning it opens the app but can't reach whatever internal logic reads deep-link params. The
+ * manifest also confirms `bolt.eu` is not a declared App Link host at all (only
+ * `scooters.taxify.eu`, `bolt.sng.link`, and `maps.google.com` are), so the `https://bolt.eu/...`
+ * web links below can never resolve inside the app itself - they're kept only for direct
+ * comparison against the corrected `action`-host native candidates.
+ *
+ * What's still an unverified guess is the **query-param contract** `DeeplinkActivity` reads once
+ * it's on the `action` host - param names, and whether it expects an explicit action-type
+ * parameter at all. [BoltLinkLabScreen][org.neteinstein.compareapp.ui.screens.BoltLinkLabScreen]
+ * exists to let a person try each candidate against the real Bolt app and report back which (if
+ * any) actually sets the destination, so the working one can replace the guess in
+ * [BoltDeepLinkCandidates.build].
  */
 data class BoltLinkCandidate(
     val id: Int,
@@ -35,33 +49,45 @@ object BoltDeepLinkCandidates {
         return listOf(
             BoltLinkCandidate(
                 id = 1,
-                label = "destination_lat/destination_lng on bolt.eu/ride/ (current app behavior)",
-                nativeUri = "bolt://ride?pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng",
+                label = "action host (verified) + destination_lat/destination_lng - current app behavior",
+                nativeUri = "bolt://action?pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng",
                 webUri = "https://bolt.eu/ride/?pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng"
             ),
             BoltLinkCandidate(
                 id = 2,
-                label = "dropoff_lat/dropoff_lng instead of destination_lat/destination_lng",
-                nativeUri = "bolt://ride?pickup_lat=$pLat&pickup_lng=$pLng&dropoff_lat=$dLat&dropoff_lng=$dLng",
+                label = "action host + dropoff_lat/dropoff_lng instead of destination_lat/destination_lng",
+                nativeUri = "bolt://action?pickup_lat=$pLat&pickup_lng=$pLng&dropoff_lat=$dLat&dropoff_lng=$dLng",
                 webUri = "https://bolt.eu/ride/?pickup_lat=$pLat&pickup_lng=$pLng&dropoff_lat=$dLat&dropoff_lng=$dLng"
             ),
             BoltLinkCandidate(
                 id = 3,
-                label = "ride.bolt.eu host instead of bolt.eu/ride/",
-                nativeUri = null,
-                webUri = "https://ride.bolt.eu/?pickup_lat=$pLat&pickup_lng=$pLng&dropoff_lat=$dLat&dropoff_lng=$dLng"
+                label = "action host + explicit action_type=order_ride param",
+                nativeUri = "bolt://action?action_type=order_ride&pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng",
+                webUri = "https://bolt.eu/ride/?action_type=order_ride&pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng"
             ),
             BoltLinkCandidate(
                 id = 4,
-                label = "bracket-style params (pickup[lat], dropoff[lat], ...)",
-                nativeUri = "bolt://ride?pickup%5Blat%5D=$pLat&pickup%5Blng%5D=$pLng&dropoff%5Blat%5D=$dLat&dropoff%5Blng%5D=$dLng",
-                webUri = "https://bolt.eu/ride/?pickup%5Blat%5D=$pLat&pickup%5Blng%5D=$pLng&dropoff%5Blat%5D=$dLat&dropoff%5Blng%5D=$dLng"
+                label = "action host + explicit type=ride param",
+                nativeUri = "bolt://action?type=ride&pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng",
+                webUri = "https://bolt.eu/ride/?type=ride&pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng"
             ),
             BoltLinkCandidate(
                 id = 5,
-                label = "comma-joined lat,lng pair under pickup/dropoff",
-                nativeUri = "bolt://ride?pickup=$pLat,$pLng&dropoff=$dLat,$dLng",
+                label = "action host + bracket-style params (pickup[lat], dropoff[lat], ...)",
+                nativeUri = "bolt://action?pickup%5Blat%5D=$pLat&pickup%5Blng%5D=$pLng&dropoff%5Blat%5D=$dLat&dropoff%5Blng%5D=$dLng",
+                webUri = "https://bolt.eu/ride/?pickup%5Blat%5D=$pLat&pickup%5Blng%5D=$pLng&dropoff%5Blat%5D=$dLat&dropoff%5Blng%5D=$dLng"
+            ),
+            BoltLinkCandidate(
+                id = 6,
+                label = "action host + comma-joined lat,lng pair under pickup/dropoff",
+                nativeUri = "bolt://action?pickup=$pLat,$pLng&dropoff=$dLat,$dLng",
                 webUri = "https://bolt.eu/ride/?pickup=$pLat,$pLng&dropoff=$dLat,$dLng"
+            ),
+            BoltLinkCandidate(
+                id = 7,
+                label = "ride host (baseline, NOT declared in Bolt's manifest - kept for comparison only)",
+                nativeUri = "bolt://ride?pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng",
+                webUri = "https://bolt.eu/ride/?pickup_lat=$pLat&pickup_lng=$pLng&destination_lat=$dLat&destination_lng=$dLng"
             )
         )
     }

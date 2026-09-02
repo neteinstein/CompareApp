@@ -64,7 +64,7 @@ class BoltDeepLinkCandidatesTest {
     }
 
     @Test
-    fun testBuild_rideBoltEuHostCandidateHasNoNativeScheme() {
+    fun testBuild_baselineCandidateUsesTheVerifiedActionHost() {
         val candidates = BoltDeepLinkCandidates.build(
             pickupLat = 40.0,
             pickupLng = -73.0,
@@ -72,8 +72,34 @@ class BoltDeepLinkCandidatesTest {
             destLng = -74.0
         )
 
-        val rideHostCandidate = candidates.first { it.id == 3 }
-        assertEquals(null, rideHostCandidate.nativeUri)
-        assertTrue(rideHostCandidate.webUri.startsWith("https://ride.bolt.eu/"))
+        val baseline = candidates.first { it.id == 1 }
+        assertTrue(baseline.nativeUri!!.startsWith("bolt://action?"))
+    }
+
+    @Test
+    fun testBuild_actionTypeCandidateIncludesActionTypeParam() {
+        val candidates = BoltDeepLinkCandidates.build(
+            pickupLat = 40.0,
+            pickupLng = -73.0,
+            destLat = 41.0,
+            destLng = -74.0
+        )
+
+        val actionTypeCandidate = candidates.first { it.id == 3 }
+        assertTrue(actionTypeCandidate.nativeUri!!.startsWith("bolt://action?"))
+        assertTrue(actionTypeCandidate.nativeUri.contains("action_type=order_ride"))
+    }
+
+    @Test
+    fun testBuild_rideHostBaselineCandidateIsKeptForComparisonOnly() {
+        val candidates = BoltDeepLinkCandidates.build(
+            pickupLat = 40.0,
+            pickupLng = -73.0,
+            destLat = 41.0,
+            destLng = -74.0
+        )
+
+        val rideHostCandidate = candidates.first { it.id == 7 }
+        assertTrue(rideHostCandidate.nativeUri!!.startsWith("bolt://ride?"))
     }
 }

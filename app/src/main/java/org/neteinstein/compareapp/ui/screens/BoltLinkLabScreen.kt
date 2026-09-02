@@ -103,10 +103,11 @@ fun BoltLinkLabScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Bolt has no published deep-link API, so the exact URL format that sets a " +
-                    "ride's destination is unverified. Enter a real pickup and dropoff below, build " +
-                    "the candidates, then tap Launch on each one - whichever candidate actually opens " +
-                    "Bolt with the destination set is the one to report back.",
+                text = "Bolt's manifest confirms bolt://action is the real verified deep-link host " +
+                    "(not bolt://ride, and not bolt.eu as a web link) - but the exact query params " +
+                    "DeeplinkActivity reads on that host are still unverified. Enter a real pickup " +
+                    "and dropoff below, build the candidates, then tap Launch on each one - whichever " +
+                    "candidate actually opens Bolt with the destination set is the one to report back.",
                 style = MaterialTheme.typography.bodyMedium
             )
 
