@@ -246,11 +246,16 @@ keytool -list -v -keystore release.keystore -alias compareapp
 ```
 
 Look for the line starting with `SHA256:` under "Certificate fingerprints". Alternatively,
-to check the fingerprint actually embedded in a built APK:
+to check the fingerprint actually embedded in a built APK, use `apksigner` (from the Android
+SDK build-tools) rather than `keytool`: `app/build.gradle` sets `minSdk 24`, so the Android
+Gradle Plugin signs release APKs with APK Signature Scheme v2/v3 only (no v1/JAR signature),
+and `keytool -printcert -jarfile` can't read those.
 
 ```bash
-keytool -printcert -jarfile CompareApp-<version>-signed.apk
+apksigner verify --print-certs CompareApp-<version>-signed.apk
 ```
+
+Look for the line starting with `Signer #1 certificate SHA-256 digest:`.
 
 Every GitHub Release built by `.github/workflows/release.yml` also prints this fingerprint
 in its release notes, so you can copy it from there instead of rebuilding locally.
@@ -1001,9 +1006,11 @@ Before deploying to production:
 keytool -list -v -keystore release.keystore
 ```
 
-**Verify APK signature**:
+**Verify APK signature** (`jarsigner -verify` only understands the legacy v1/JAR
+signature, which AGP disables by default once `minSdk` is 24+, so use `apksigner`
+instead):
 ```bash
-jarsigner -verify -verbose -certs app-release.apk
+apksigner verify --print-certs --verbose app-release.apk
 ```
 
 **Get APK info**:
