@@ -39,6 +39,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Distinct applicationId so a debug build installs side by side with the release
+            // app instead of overwriting it (Android treats differing applicationId as a
+            // different app entirely).
+            applicationIdSuffix ".test"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
