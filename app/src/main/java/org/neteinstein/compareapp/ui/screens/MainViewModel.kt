@@ -265,16 +265,10 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Opens the Bolt app via its custom scheme. The host here is `action`, not `ride` -
-     * confirmed from Bolt's own shipped AndroidManifest.xml (`ee.mtakso.client`):
-     * `DeeplinkActivity` declares an `autoVerify="true"` intent-filter for
-     * `bolt://action` / `taxify://action` specifically, while any other host (including the
-     * `ride` host this used to use) only matches a generic catch-all filter with no host
-     * constraint - i.e. `bolt://ride` opens the app but lands nowhere useful, which matches
-     * the "Bolt opens with no destination set" symptom exactly. The query params below
-     * (`pickup_lat` etc.) are still an unverified guess at what `DeeplinkActivity` reads once
-     * it's on the `action` host - see [org.neteinstein.compareapp.utils.BoltDeepLinkCandidates]
-     * and the Bolt Link Lab (Settings > Diagnostics) for testing alternatives on-device.
+     * TEST BRANCH: reverted to the original `ride`-host hack from PR #63 (superseded by the
+     * `action`-host fix in PR #79/#80/#81 - see [org.neteinstein.compareapp.utils.BoltDeepLinkCandidates]
+     * for why `action` is believed correct) so it can be exercised end-to-end in the real app
+     * flow, not just via the Bolt Link Lab candidate list.
      */
     internal fun createBoltDeepLink(
         pickup: String,
@@ -290,12 +284,12 @@ class MainViewModel @Inject constructor(
             val destLat = formatCoordinate(dropoffCoords.first)
             val destLng = formatCoordinate(dropoffCoords.second)
 
-            "bolt://action?pickup_lat=$pickupLat&pickup_lng=$pickupLng&destination_lat=$destLat&destination_lng=$destLng"
+            "bolt://ride?pickup_lat=$pickupLat&pickup_lng=$pickupLng&destination_lat=$destLat&destination_lng=$destLng"
         } else {
             Log.w("MainViewModel", "Geocoding failed, using fallback Bolt deep link format")
             val pickupEncoded = URLEncoder.encode(pickup, "UTF-8")
             val dropoffEncoded = URLEncoder.encode(dropoff, "UTF-8")
-            "bolt://action?pickup=$pickupEncoded&destination=$dropoffEncoded"
+            "bolt://ride?pickup=$pickupEncoded&destination=$dropoffEncoded"
         }
     }
 

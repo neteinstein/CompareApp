@@ -153,7 +153,7 @@ class BoltDeepLinkFormatTest {
         val deepLink = viewModel.createBoltDeepLink(pickup, dropoff, pickupCoords, dropoffCoords)
 
         // Then - should contain all required parameters with correct values
-        assertTrue("Deep link should start with bolt://action?", deepLink.startsWith("bolt://action?"))
+        assertTrue("Deep link should start with bolt://ride?", deepLink.startsWith("bolt://ride?"))
         assertTrue("Should contain pickup_lat", deepLink.contains("pickup_lat=40.758896"))
         assertTrue("Should contain pickup_lng", deepLink.contains("pickup_lng=-73.985130"))
         assertTrue("Should contain destination_lat", deepLink.contains("destination_lat=40.785091"))
