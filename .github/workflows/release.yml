@@ -85,7 +85,13 @@ jobs:
         id: cert
         run: |
           APK="app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_with_build }}-${{ steps.rename.outputs.apk_suffix }}.apk"
-          FINGERPRINT=$(keytool -printcert -jarfile "${APK}" | awk -F'SHA256: ' '/SHA256:/ {print $2; exit}')
+          # app/build.gradle sets minSdk 24, so AGP disables APK Signature Scheme v1
+          # (JAR signing) by default and signs release APKs with v2/v3 only. keytool
+          # only understands v1 signatures, so `keytool -printcert -jarfile` silently
+          # reports "Not a signed jar file" on this APK. apksigner understands every
+          # APK signing scheme, so use it instead.
+          APKSIGNER=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)/apksigner
+          FINGERPRINT=$("${APKSIGNER}" verify --print-certs "${APK}" | sed -n 's/.*certificate SHA-256 digest: //p' | head -n1)
           if [ -z "${FINGERPRINT}" ]; then
             echo "::error::Failed to extract the SHA-256 certificate fingerprint from ${APK}."
             exit 1
@@ -113,9 +119,9 @@ jobs:
             ```
             ${{ steps.cert.outputs.sha256_fingerprint }}
             ```
-            Compare this against the output of `keytool -printcert -jarfile CompareApp-*.apk`
-            (or `apksigner verify --print-certs`) before installing, to confirm the APK was
-            signed with the same certificate as the currently installed app.
+            Compare this against the output of `apksigner verify --print-certs CompareApp-*.apk`
+            before installing, to confirm the APK was signed with the same certificate as the
+            currently installed app.
 
             ### Requirements
             - Android 7.0 (API 24) or higher
