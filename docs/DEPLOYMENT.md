@@ -235,6 +235,26 @@ Enter key password for <compareapp>
 
 **Output**: `release.keystore` file
 
+### Getting the SHA-256 Certificate Fingerprint
+
+Google Play Console (and other services, e.g. Digital Asset Links or OAuth client
+registration) may ask you to register your app by entering the SHA-256 fingerprint of
+its signing certificate. To get it from your keystore:
+
+```bash
+keytool -list -v -keystore release.keystore -alias compareapp
+```
+
+Look for the line starting with `SHA256:` under "Certificate fingerprints". Alternatively,
+to check the fingerprint actually embedded in a built APK:
+
+```bash
+keytool -printcert -jarfile CompareApp-<version>-signed.apk
+```
+
+Every GitHub Release built by `.github/workflows/release.yml` also prints this fingerprint
+in its release notes, so you can copy it from there instead of rebuilding locally.
+
 ### Keystore Security Best Practices
 
 1. **Backup**: Store keystore in multiple secure locations

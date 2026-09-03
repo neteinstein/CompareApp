@@ -81,6 +81,17 @@ jobs:
           echo "apk_suffix=${SUFFIX}" >> $GITHUB_OUTPUT
         id: rename
 
+      - name: Get certificate fingerprint
+        id: cert
+        run: |
+          APK="app/build/outputs/apk/release/CompareApp-${{ steps.version.outputs.version_with_build }}-${{ steps.rename.outputs.apk_suffix }}.apk"
+          FINGERPRINT=$(keytool -printcert -jarfile "${APK}" | awk -F'SHA256: ' '/SHA256:/ {print $2; exit}')
+          if [ -z "${FINGERPRINT}" ]; then
+            echo "::error::Failed to extract the SHA-256 certificate fingerprint from ${APK}."
+            exit 1
+          fi
+          echo "sha256_fingerprint=${FINGERPRINT}" >> $GITHUB_OUTPUT
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
@@ -96,6 +107,15 @@ jobs:
 
             ### Installation
             Download the APK file below and install it on your Android device.
+
+            ### Verify the APK signature
+            Signing certificate SHA-256 fingerprint:
+            ```
+            ${{ steps.cert.outputs.sha256_fingerprint }}
+            ```
+            Compare this against the output of `keytool -printcert -jarfile CompareApp-*.apk`
+            (or `apksigner verify --print-certs`) before installing, to confirm the APK was
+            signed with the same certificate as the currently installed app.
 
             ### Requirements
             - Android 7.0 (API 24) or higher
