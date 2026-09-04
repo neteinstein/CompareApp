@@ -19,6 +19,12 @@ android {
         versionCode buildNumber ? buildNumber.toInteger() : 1
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // GITHUB_REPOSITORY ("owner/repo") is set automatically by GitHub Actions on every run.
+        // Injecting it lets UpdateRepositoryImpl point at whichever repo actually built the APK
+        // (e.g. a fork) instead of a hardcoded one; fall back to this repo when building locally.
+        def githubRepoSlug = System.getenv("GITHUB_REPOSITORY") ?: "neteinstein/CompareApp"
+        buildConfigField "String", "GITHUB_REPO_SLUG", "\"${githubRepoSlug}\""
     }
 
     signingConfigs {
