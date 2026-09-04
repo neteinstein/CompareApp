@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.neteinstein.compareapp.BuildConfig
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -31,8 +32,11 @@ class UpdateRepositoryImpl @Inject constructor(
 
     companion object {
         private const val TAG = "UpdateRepository"
-        private const val LATEST_RELEASE_URL =
-            "https://api.github.com/repos/neteinstein/CompareUberVsBoltPriceApp/releases/latest"
+        // BuildConfig.GITHUB_REPO_SLUG is injected at build time from the GITHUB_REPOSITORY env
+        // var GitHub Actions sets on every run - see the GITHUB_REPO_SLUG buildConfigField in
+        // app/build.gradle - so this always points at the repo that actually built the APK.
+        private val LATEST_RELEASE_URL =
+            "https://api.github.com/repos/${BuildConfig.GITHUB_REPO_SLUG}/releases/latest"
         private const val UPDATE_CACHE_DIR_NAME = "updates"
     }
 
